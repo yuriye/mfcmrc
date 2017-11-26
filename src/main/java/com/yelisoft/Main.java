@@ -14,7 +14,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Collection;
 
-public class MrcMain {
+public class Main {
 
     public static void main(String[] args) throws IOException {
         Config config = Config.getInstance();

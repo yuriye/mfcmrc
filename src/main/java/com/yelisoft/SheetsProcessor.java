@@ -14,23 +14,25 @@ import java.util.Map;
 
 public class SheetsProcessor {
 
+    public static void process(XSSFSheet inSheet,
+                               HSSFSheet outSheet,
+                               int outServiceNameColumn,
+                               String auth) throws IOException {
 
-    public static void process(XSSFSheet inSheet, HSSFSheet outSheet, int outServiceNameColumn, String auth) throws IOException {
         Config config = Config.getInstance();
         Map<String, Integer> inServiceRow = new HashMap<>();
         int inServiceNameColumn = 1;
         int inSheetStartRow = 10;
         int dataColumn;
-        int totalColumn = 18;
+        int totalColumn = 19;
         int outRowOfTotalCell = 0;
         int outColumnOfTotalCell = outServiceNameColumn + 5;
 
-        for (dataColumn = 7; dataColumn < 18; dataColumn++) {
+        for (dataColumn = 7; dataColumn < totalColumn; dataColumn++) {
             if (config.getMonth().toUpperCase().equals(
                     inSheet.getRow(inSheetStartRow - 2).getCell(dataColumn).getStringCellValue().toUpperCase()))
                 break;
         }
-//        System.out.println(dataColumn);
 
         for(int i = inSheetStartRow; true; i++) {
             XSSFRow row  = inSheet.getRow(i);
@@ -44,8 +46,6 @@ public class SheetsProcessor {
 
         System.out.println(inSheet.getSheetName() + "->" + outSheet.getSheetName());
         for (int dataRowNumber = 7; true ; dataRowNumber++) {
-            String monthData;
-            String rowTotalData;
             if (CellType.STRING.equals(outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn - 1).getCellTypeEnum())) {
                 if (outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn - 1).getStringCellValue().startsWith("Общее")) {
                     outRowOfTotalCell = dataRowNumber;
@@ -78,21 +78,8 @@ public class SheetsProcessor {
             XSSFCell inDataCell = inRow.getCell(dataColumn);
             if (null == inDataCell) continue;
 
-            Object inData;
-            if(CellType.NUMERIC.equals(inDataCell.getCellTypeEnum())) {
-                inData = inDataCell.getNumericCellValue();
-                outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 2).setCellValue((double)inData);
-
-            }
-            else {
-                inData = inDataCell.getStringCellValue();
-                outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 2).setCellValue((String)inData);
-
-            }
-
-            XSSFCell inTotalCell = inRow.getCell(totalColumn);
-            String totalData = inTotalCell.getStringCellValue();
-            outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 3).setCellValue(totalData);
+            copyXToHCell(inDataCell, outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 2));
+            copyXToHCell(inRow.getCell(totalColumn), outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 3));
 
             if("".equals(outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn).getStringCellValue())) break;
         }
@@ -104,26 +91,25 @@ public class SheetsProcessor {
             if (null == inSheet.getRow(rowNum).getCell(0)) continue;
             if (inSheet.getRow(rowNum).getCell(0).getStringCellValue().startsWith("Консул")) break;
         }
-        Object consTotal;
         if ("fed".equals(auth)) {
-            if (CellType.NUMERIC.equals(inSheet.getRow(rowNum).getCell(16).getCellTypeEnum())) {
-                consTotal = inSheet.getRow(rowNum).getCell(16).getNumericCellValue();
-                outSheet.getRow(outRowOfTotalCell).getCell(outColumnOfTotalCell).setCellValue((double)consTotal);
-            }
-            else {
-                consTotal = inSheet.getRow(rowNum).getCell(16).getStringCellValue();
-                outSheet.getRow(outRowOfTotalCell).getCell(outColumnOfTotalCell).setCellValue((String) consTotal);
-            }
+            copyXToHCell(inSheet.getRow(rowNum).getCell(16),
+                    outSheet.getRow(outRowOfTotalCell).getCell(outColumnOfTotalCell));
         }
         else if ("reg".equals(auth)) {
-            if (CellType.NUMERIC.equals(inSheet.getRow(rowNum).getCell(17).getCellTypeEnum())) {
-                consTotal = inSheet.getRow(rowNum).getCell(17).getNumericCellValue();
-                outSheet.getRow(outRowOfTotalCell).getCell(outColumnOfTotalCell).setCellValue((double)consTotal);
-            }
-            else {
-                consTotal = inSheet.getRow(rowNum).getCell(17).getStringCellValue();
-                outSheet.getRow(outRowOfTotalCell).getCell(outColumnOfTotalCell).setCellValue((String) consTotal);
-            }
+            copyXToHCell(inSheet.getRow(rowNum).getCell(17),
+                    outSheet.getRow(outRowOfTotalCell).getCell(outColumnOfTotalCell));
         }
     }
+
+    private static void copyXToHCell(XSSFCell sourceCell, HSSFCell destinationCell) {
+        if (CellType.BLANK.equals(sourceCell.getCellTypeEnum())) {}
+        else if (CellType.NUMERIC.equals(sourceCell.getCellTypeEnum())) {
+            destinationCell.setCellValue(sourceCell.getNumericCellValue());
+        } else if (CellType.STRING.equals(sourceCell.getCellTypeEnum())) {
+            destinationCell.setCellValue(sourceCell.getStringCellValue());
+        } else if (CellType.BOOLEAN.equals(sourceCell.getCellTypeEnum())) {
+            destinationCell.setCellValue(sourceCell.getBooleanCellValue());
+        }
+    }
+
 }
