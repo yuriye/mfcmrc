@@ -44,8 +44,6 @@ public class Main {
             count = i - 2;
         }
 
-        System.out.println("count="+count);
-
         System.out.println(config.getOutputFolderName());
         FileUtils.deleteDirectory(new File(config.getOutputFolderName()));
         FileUtils.copyDirectory(new File(config.getInputFolderName())
@@ -59,12 +57,13 @@ public class Main {
                 ,new WildcardFileFilter("otherServ*.xls*"));
         String[] exts = {"xls", "xlsx" };
 
-        XSSFWorkbook inBook = new XSSFWorkbook(new FileInputStream(config.getInputFolderName() + "/" + config.getInputFileName()));
+        FileInputStream fileInputStream = new FileInputStream(config.getInputFolderName() + "/" + config.getInputFileName());
+        XSSFWorkbook inBook = new XSSFWorkbook(fileInputStream);
+        System.out.println("Input file: " + config.getInputFolderName() + "/" + config.getInputFileName());
 
         Collection<File> files = FileUtils.listFiles(new File(config.getOutputFolderName()), exts, false);
         for (File bookFile: files) {
-            System.out.println();
-            System.out.println(bookFile.getName());
+            System.out.println("Output file name: " + bookFile.getName());
             int cellOffset = 4;
             if (bookFile.getName().startsWith("other")) cellOffset = 2;
             HSSFWorkbook outBook = new HSSFWorkbook(new FileInputStream(bookFile));

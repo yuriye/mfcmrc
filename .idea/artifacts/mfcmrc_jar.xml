@@ -1,5 +1,5 @@
 <component name="ArtifactManager">
-  <artifact type="jar" name="mfcmrc:jar">
+  <artifact type="jar" build-on-make="true" name="mfcmrc:jar">
     <output-path>$PROJECT_DIR$/out/artifacts/mfcmrc_jar</output-path>
     <root id="archive" name="mfcmrc.jar">
       <element id="module-output" name="mfcmrc" />

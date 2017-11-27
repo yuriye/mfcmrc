@@ -24,11 +24,14 @@ public class SheetsProcessor {
         int inServiceNameColumn = 1;
         int inSheetStartRow = 10;
         int dataColumn;
-        int totalColumn = 19;
+        int vydachaColumn = 19;
         int outRowOfTotalCell = 0;
         int outColumnOfTotalCell = outServiceNameColumn + 5;
+        int sumOf3cell = 0;
+        int sumVydachOf3cell = 0;
+        int consultRowNumber = 0;
 
-        for (dataColumn = 7; dataColumn < totalColumn; dataColumn++) {
+        for (dataColumn = 7; dataColumn < vydachaColumn; dataColumn++) {
             if (config.getMonth().toUpperCase().equals(
                     inSheet.getRow(inSheetStartRow - 2).getCell(dataColumn).getStringCellValue().toUpperCase()))
                 break;
@@ -37,6 +40,21 @@ public class SheetsProcessor {
         for(int i = inSheetStartRow; true; i++) {
             XSSFRow row  = inSheet.getRow(i);
             if (null == row) break;
+            String cell1Value = "";
+            try {
+                cell1Value = row.getCell(0).getStringCellValue();
+
+                if("Прием запросов на регистрацию на портале Gosuslugi.ru".equals(cell1Value)
+                        || "Прием запросов на подтверждение регистрации на портале Gosuslugi.ru".equals(cell1Value)
+                        || "Восстановление регистрации на портале Gosuslugi.ru".equals(cell1Value)) {
+                    sumOf3cell += row.getCell(dataColumn).getNumericCellValue();
+                    sumVydachOf3cell  += row.getCell(vydachaColumn).getNumericCellValue();
+                }
+                else if("Консультации".equals(cell1Value))
+                    consultRowNumber = row.getRowNum();
+            }
+            catch (Exception e) {}
+
             XSSFCell cell = row.getCell(inServiceNameColumn);
             if (cell == null) continue;
             String inServiceName = cell.getStringCellValue();
@@ -46,6 +64,7 @@ public class SheetsProcessor {
 
         System.out.println(inSheet.getSheetName() + "->" + outSheet.getSheetName());
         for (int dataRowNumber = 7; true ; dataRowNumber++) {
+
             if (CellType.STRING.equals(outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn - 1).getCellTypeEnum())) {
                 if (outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn - 1).getStringCellValue().startsWith("Общее")) {
                     outRowOfTotalCell = dataRowNumber;
@@ -58,35 +77,42 @@ public class SheetsProcessor {
                 if (null == row) break;
                 HSSFCell cell = row.getCell(outServiceNameColumn - 1);
                 if (cell == null) continue;
-                int rowNumber = Integer.valueOf(cell.getStringCellValue());
-                System.out.println(rowNumber + ":" );
-
-
+//                int rowNumber = Integer.valueOf(cell.getStringCellValue());
             }
             catch (NumberFormatException mfe) {
                 continue;
             }
             String outService = outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn).getStringCellValue();
+            if ("Регистрация, подтверждение личности, восстановление доступа граждан в Единой системе идентификации и аутентификации (ЕСИА)"
+                        .equals(outService)) {
+                outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 2).setCellValue(sumOf3cell);
+                outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 3).setCellValue(sumVydachOf3cell);
+                System.out.println("sumOf3cell = " + sumOf3cell);
+                System.out.println("sumVydachOf3cell = " + sumVydachOf3cell);
+                continue;
+            }
+
+
             String inService = config.getInForOutService(outService);
 
             if(null == inService) continue;
 
-            System.out.println("inService:" + inService );
-            System.out.println("row=" + inServiceRow.get(inService));
+//            System.out.println("inService:" + inService );
+//            System.out.println("row=" + inServiceRow.get(inService));
             if (null == inServiceRow.get(inService)) continue;
             XSSFRow inRow = inSheet.getRow(inServiceRow.get(inService));
             XSSFCell inDataCell = inRow.getCell(dataColumn);
             if (null == inDataCell) continue;
 
             copyXToHCell(inDataCell, outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 2));
-            copyXToHCell(inRow.getCell(totalColumn), outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 3));
+            copyXToHCell(inRow.getCell(vydachaColumn), outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 3));
 
             if("".equals(outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn).getStringCellValue())) break;
         }
 
         int rowNum;
         for(rowNum = inSheet.getLastRowNum(); rowNum >= 0; rowNum--) {
-            System.out.println("rowNum=" + rowNum);
+//            System.out.println("rowNum=" + rowNum);
             if (null == inSheet.getRow(rowNum)) continue;
             if (null == inSheet.getRow(rowNum).getCell(0)) continue;
             if (inSheet.getRow(rowNum).getCell(0).getStringCellValue().startsWith("Консул")) break;
