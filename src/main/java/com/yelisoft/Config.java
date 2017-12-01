@@ -11,18 +11,48 @@ public class Config {
 
     private Map<String, String> sheetsMap = new HashMap<>();
     private String inputFolderName = "C:/mfcmrc";
+    private String templatesFolderName = "templates";
     private String outputFolderName = "out";
     private String pagesComplianceFileName = "pagescompliance.xlsx";
     private String inputFileName = "АКТУАЛЬНЫЙ МФЦ  2017 ЗАКРЫТЫЙ Октябрь.xlsx";
     private String month = "октябрь";
     private String servicesComplianceFileName = "соответствия.xlsx";
     private Map<String, String> servicesOutToInMap = new HashMap<>();
+    private Map<String, Boolean> hasOutputOfDocs = new HashMap<>();
+
+    public Map<String, Boolean> getHasOutputOfDocs() {
+        return hasOutputOfDocs;
+    }
+
+    public void setHasOutputOfDocs(Map<String, Boolean> hasOutputOfDocs) {
+        this.hasOutputOfDocs = hasOutputOfDocs;
+    }
+
+    public boolean hasOutputForService(String service) {
+        if (null == hasOutputOfDocs.get(service)) return false;
+        return hasOutputOfDocs.get(service);
+    }
+
+    public void setOutputForService(String service, Boolean has) {
+        if("".equals(service)) return;
+        if(null == service || null == has) return;
+        hasOutputOfDocs.put(service, has);
+    }
+
 
     private Config() {}
 
     public static Config getInstance() {
         if(instance == null) instance = new Config();
         return instance;
+    }
+
+    public String getTemplatesFolderName() {
+        return templatesFolderName;
+    }
+
+    public void setTemplatesFolderName(String templatesFolderName) {
+        this.templatesFolderName = templatesFolderName;
     }
 
     public String getFullPagesComplianceFileName() {

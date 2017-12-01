@@ -41,18 +41,26 @@ public class Main {
             String inService = row.getCell(1).getStringCellValue();
             if ("".equals(inService)) continue;
             config.setInForOutService(outService, inService);
+            String tmp = "";
+            try {
+                tmp = row.getCell(2).getStringCellValue();
+            }
+            catch (Exception e) {}
+            tmp = tmp == null? "": tmp;
+            config.setOutputForService(outService, "".equals(tmp)? false: true);
+
             count = i - 2;
         }
 
         System.out.println(config.getOutputFolderName());
         FileUtils.deleteDirectory(new File(config.getOutputFolderName()));
-        FileUtils.copyDirectory(new File(config.getInputFolderName())
+        FileUtils.copyDirectory(new File(config.getInputFolderName() + "/" + config.getTemplatesFolderName())
                 ,new File(config.getOutputFolderName())
                 ,new WildcardFileFilter("feder*.xls*"));
-        FileUtils.copyDirectory(new File(config.getInputFolderName())
+        FileUtils.copyDirectory(new File(config.getInputFolderName() + "/" + config.getTemplatesFolderName())
                 ,new File(config.getOutputFolderName())
                 ,new WildcardFileFilter("region*.xls*"));
-        FileUtils.copyDirectory(new File(config.getInputFolderName())
+        FileUtils.copyDirectory(new File(config.getInputFolderName() + "/" + config.getTemplatesFolderName())
                 ,new File(config.getOutputFolderName())
                 ,new WildcardFileFilter("otherServ*.xls*"));
         String[] exts = {"xls", "xlsx" };
