@@ -45,16 +45,20 @@ public class SheetsProcessor {
             XSSFRow row = inSheet.getRow(i);
             if (null == row) break;
             try {
-                String cell1Value = row.getCell(0).getStringCellValue();
 
-                if ("Прием запросов на регистрацию на портале Gosuslugi.ru".equals(cell1Value)
-                        || "Прием запросов на подтверждение регистрации на портале Gosuslugi.ru".equals(cell1Value)
-                        || "Восстановление регистрации на портале Gosuslugi.ru".equals(cell1Value)) {
-                    sumOf3cell += row.getCell(dataColumn).getNumericCellValue();
-                    sumVydachOf3cell += row.getCell(vydachaColumn).getNumericCellValue();
-                } else if ("Консультации".equals(cell1Value))
-                    consultRowNumber = row.getRowNum();
+                if ( null != row.getCell(0) && CellType.STRING.equals(row.getCell(0).getCellTypeEnum())) {
+                    String cell1Value = row.getCell(0).getStringCellValue();
+                    if ("Прием запросов на регистрацию на портале Gosuslugi.ru".equals(cell1Value)
+                            || "Прием запросов на подтверждение регистрации на портале Gosuslugi.ru".equals(cell1Value)
+                            || "Восстановление регистрации на портале Gosuslugi.ru".equals(cell1Value)) {
+                        sumOf3cell += null == row.getCell(dataColumn)? 0: row.getCell(dataColumn).getNumericCellValue();
+                        sumVydachOf3cell += null == row.getCell(vydachaColumn)? 0: row.getCell(vydachaColumn).getNumericCellValue();
+                    } else if ("Консультации".equals(cell1Value))
+                        consultRowNumber = row.getRowNum();
+                }
+
             } catch (Exception e) {
+                e.printStackTrace();
             }
 
             XSSFCell cell = row.getCell(inServiceNameColumn);
