@@ -118,7 +118,7 @@ public class SheetsProcessor {
                         }
 
                 outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 2).setCellValue(sumOfCell);
-                outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 3).setCellValue(sumVydachOfCells);
+//                outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 3).setCellValue(sumVydachOfCells);
                 continue;
             }
 
