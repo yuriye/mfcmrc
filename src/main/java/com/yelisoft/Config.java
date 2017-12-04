@@ -29,8 +29,9 @@ public class Config {
     }
 
     public boolean hasOutputForService(String service) {
-        if (null == hasOutputOfDocs.get(service)) return false;
-        return hasOutputOfDocs.get(service);
+        Boolean has = hasOutputOfDocs.get(service);
+        if (null != has && has) return true;
+        return false;
     }
 
     public void setOutputForService(String service, Boolean has) {

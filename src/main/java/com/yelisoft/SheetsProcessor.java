@@ -14,6 +14,8 @@ import java.util.Map;
 
 public class SheetsProcessor {
 
+    public static Map<String, Boolean> hasOutputMap = new HashMap<>();
+
     public static void process(XSSFSheet inSheet,
                                HSSFSheet outSheet,
                                int outServiceNameColumn,
@@ -29,6 +31,7 @@ public class SheetsProcessor {
         int outRowOfTotalCell = 0;
         int outColumnOfTotalCell = outServiceNameColumn + 5;
         int consultRowNumber = 0;
+
 
         for (dataColumn = 7; dataColumn < vydachaColumn; dataColumn++) {
             if (config.getMonth().toUpperCase().equals(
@@ -132,7 +135,12 @@ public class SheetsProcessor {
             copyXToHCell(inDataCell, outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 2));
 
             if (config.hasOutputForService(outService)) {
-                copyXToHCell(inRow.getCell(vydachaColumn), outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 3));
+                copyXToHCell(inRow.getCell(vydachaColumn),
+                        outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 3));
+                hasOutputMap.put(outService, true);
+            }
+            else {
+                hasOutputMap.put(outService, false);
             }
             if ("".equals(outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn).getStringCellValue())) break;
         }
@@ -151,6 +159,7 @@ public class SheetsProcessor {
             copyXToHCell(inSheet.getRow(rowNum).getCell(17),
                     outSheet.getRow(outRowOfTotalCell).getCell(outColumnOfTotalCell));
         }
+
     }
 
     private static void copyXToHCell(XSSFCell sourceCell, HSSFCell destinationCell) {

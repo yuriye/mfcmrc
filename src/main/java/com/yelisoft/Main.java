@@ -13,6 +13,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 
 public class Main {
 
@@ -45,9 +46,18 @@ public class Main {
             try {
                 tmp = row.getCell(2).getStringCellValue();
             }
-            catch (Exception e) {}
-            tmp = tmp == null? "": tmp;
-            config.setOutputForService(outService, "".equals(tmp)? false: true);
+            catch (Exception e) {
+                tmp = "";
+            }
+
+            tmp = tmp.trim();
+            if (tmp.length() > 15)
+                tmp = "нет выдачи через МФЦ";
+            else
+                tmp = "";
+            if (!"нет выдачи через МФЦ".equals(tmp))
+                tmp = "";
+            config.setOutputForService(outService, "нет выдачи через МФЦ".equals(tmp)? false: true);
 
             count = i - 2;
         }
@@ -93,6 +103,26 @@ public class Main {
             outBook.close();
         }
         inBook.close();
+
+        int countOfFalse = 0;
+        int countOfTrue = 0;
+        for (Map.Entry<String, Boolean> entry : config.getHasOutputOfDocs().entrySet()) {
+            if(entry.getValue())
+                countOfTrue++;
+            else countOfFalse++;
+        }
+
+//        System.out.println("true: " + countOfTrue);
+//        System.out.println("false: " + countOfFalse);
+//
+//        System.out.println();
+//        System.out.println();
+//        System.out.println();
+//
+//        for (Map.Entry<String, Boolean> entry : SheetsProcessor.hasOutputMap.entrySet()) {
+//                System.out.println(entry.getValue() + ": " + entry.getKey());
+//        }
+
 
     }
 
