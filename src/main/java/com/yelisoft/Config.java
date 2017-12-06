@@ -1,5 +1,9 @@
 package com.yelisoft;
 
+import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,6 +50,50 @@ public class Config {
     public static Config getInstance() {
         if(instance == null) instance = new Config();
         return instance;
+    }
+
+    public void initFromFile(String fileName) throws IOException {
+//        BufferedReader br = new BufferedReader(new FileReader(fileName));
+        BufferedReader br = Files.newBufferedReader(Paths.get(fileName), Charset.forName("UTF-8"));
+        String line;
+        line = br.readLine();
+        while (true) {
+            line = br.readLine();
+            System.out.println(line);
+            if (null == line) break;
+            if ("".equals(line)) continue;
+            if (line.startsWith("#")) continue;
+            if (line.startsWith("//")) continue;
+            String[] array = line.split("=");
+            if(array.length < 2) {
+                System.out.println("Неправильная строка каонфигурации:" + line);
+                continue;
+            }
+            array[0] = array[0].trim();
+            array[1] = array[1].trim();
+            switch (array[0]) {
+                case "month":
+                    month = array[1];
+                    break;
+                case "baseDirectory":
+                    inputFolderName = array[1];
+                    break;
+                case "templatesDirectory":
+                    templatesFolderName = array[1];
+                    break;
+                case "outputDirectory":
+                    outputFolderName = array[1];
+                case "pagesComplianceFileName":
+                    pagesComplianceFileName = array[1];
+                    break;
+                case "inputFileName":
+                    inputFileName = array[1];
+                    break;
+                case "servicesComplianceFileName":
+                    break;
+            }
+        }
+        br.close();
     }
 
     public String getTemplatesFolderName() {

@@ -18,7 +18,11 @@ import java.util.Map;
 public class Main {
 
     public static void main(String[] args) throws IOException {
+
         Config config = Config.getInstance();
+        if(args.length > 0) {
+            config.initFromFile(args[0]);
+        }
 
         XSSFWorkbook pagesComplianceBook = new XSSFWorkbook(new FileInputStream(config.getFullPagesComplianceFileName()));
         XSSFSheet pagesComplianceSheet = pagesComplianceBook.getSheetAt(0);
