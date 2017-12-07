@@ -32,6 +32,19 @@ public class SheetsProcessor {
         int outColumnOfTotalCell = outServiceNameColumn + 5;
         int consultRowNumber = 0;
 
+        //ВЫДАЧА ЗА НОЯБРЬ
+        String vydZa = "ВЫДАЧА ЗА " + config.getMonth().toUpperCase();
+        for (dataColumn = 7; dataColumn < 100; dataColumn++) {
+            if (vydZa.equals(inSheet.getRow(inSheetStartRow - 2)
+                    .getCell(dataColumn)
+                    .getStringCellValue()
+                    .toUpperCase())) {
+                vydachaColumn = dataColumn;
+                System.out.println("vydachaColumn=" + vydachaColumn);
+                break;
+            }
+
+        }
 
         for (dataColumn = 7; dataColumn < vydachaColumn; dataColumn++) {
             if (config.getMonth().toUpperCase().equals(
@@ -161,6 +174,9 @@ public class SheetsProcessor {
                     outSheet.getRow(outRowOfTotalCell).getCell(outColumnOfTotalCell));
         } else if ("reg".equals(auth)) {
             copyXToHCell(inSheet.getRow(rowNum).getCell(17),
+                    outSheet.getRow(outRowOfTotalCell).getCell(outColumnOfTotalCell));
+        } else if ("oth".equals(auth)) {
+            copyXToHCell(inSheet.getRow(rowNum).getCell(19),
                     outSheet.getRow(outRowOfTotalCell).getCell(outColumnOfTotalCell));
         }
 

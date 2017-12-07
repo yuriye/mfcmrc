@@ -99,6 +99,7 @@ public class Main {
                 String auth = "";
                 if(bookFile.getName().startsWith("fed")) auth = "fed";
                 else if(bookFile.getName().startsWith("reg")) auth = "reg";
+                else if(bookFile.getName().startsWith("oth")) auth = "oth";
                 SheetsProcessor.process(inSheet, outSheet, cellOffset, auth);
             }
             FileOutputStream outStream = new FileOutputStream(bookFile);
