@@ -104,7 +104,7 @@ public class SheetsProcessor {
             if ("Регистрация, подтверждение личности, восстановление доступа граждан в Единой системе идентификации и аутентификации (ЕСИА)"
                     .equals(outService)) {
                 outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 2).setCellValue(sumOf3cell);
-                outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 3).setCellValue(sumVydachOf3cell);
+//                outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 3).setCellValue(sumVydachOf3cell);
                 System.out.println("sumOf3cell = " + sumOf3cell);
                 System.out.println("sumVydachOf3cell = " + sumVydachOf3cell);
                 continue;
@@ -127,6 +127,8 @@ public class SheetsProcessor {
                             sumVydachOfCells += inRow.getCell(vydachaColumn).getNumericCellValue();
                         }
                 inService = "Доставка ежемесячной денежной выплаты (Установление ЕДВ)";
+                inRow = inSheet.getRow(inServiceRow.get(inService));
+                inDataCell = inRow.getCell(dataColumn);
                 if (null != inServiceRow.get(inService))
                     if (null != inDataCell)
                         if (CellType.NUMERIC.equals(inDataCell.getCellTypeEnum())) {
@@ -167,7 +169,8 @@ public class SheetsProcessor {
 //            System.out.println("rowNum=" + rowNum);
             if (null == inSheet.getRow(rowNum)) continue;
             if (null == inSheet.getRow(rowNum).getCell(0)) continue;
-            if (inSheet.getRow(rowNum).getCell(0).getStringCellValue().startsWith("Консул")) break;
+            if (inSheet.getRow(rowNum).getCell(0).getStringCellValue().toUpperCase().startsWith("КОНС")) break;
+            if (inSheet.getRow(rowNum).getCell(0).getStringCellValue().length() > 60) break;
         }
         if ("fed".equals(auth)) {
             copyXToHCell(inSheet.getRow(rowNum).getCell(16),
