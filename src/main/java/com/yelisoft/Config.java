@@ -6,11 +6,14 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by Yuriy Yeliseyev on 21.11.2017.
  */
 public class Config {
+    private static final Logger log = LoggerFactory.getLogger(Config.class);
     private static Config instance;
 
     private Map<String, String> sheetsMap = new HashMap<>();
@@ -59,14 +62,16 @@ public class Config {
         line = br.readLine();
         while (true) {
             line = br.readLine();
-            System.out.println(line);
+//            System.out.println(line);
+            log.debug(line);
             if (null == line) break;
             if ("".equals(line)) continue;
             if (line.startsWith("#")) continue;
             if (line.startsWith("//")) continue;
             String[] array = line.split("=");
             if(array.length < 2) {
-                System.out.println("Неправильная строка каонфигурации:" + line);
+//                System.out.println("Неправильная строка каонфигурации:" + line);
+                log.debug("Неправильная строка каонфигурации:" + line);
                 continue;
             }
             array[0] = array[0].trim();

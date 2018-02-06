@@ -14,10 +14,24 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
+import java.util.logging.LogManager;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class Main {
+    private static final Logger log = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) throws IOException {
+//        try {
+//            LogManager.getLogManager().readConfiguration(
+//                    com.yelisoft.Main.class.getResourceAsStream("logging.properties"));
+//        } catch (IOException e) {
+//            System.err.println("Could not setup logger configuration: " + e.toString());
+//        }
+
+        log.info("Main started");
 
         Config config = Config.getInstance();
         if(args.length > 0) {
@@ -81,11 +95,12 @@ public class Main {
 
         FileInputStream fileInputStream = new FileInputStream(config.getInputFolderName() + "/" + config.getInputFileName());
         XSSFWorkbook inBook = new XSSFWorkbook(fileInputStream);
-        System.out.println("Input file: " + config.getInputFolderName() + "/" + config.getInputFileName());
-
+        //System.out.println("Input file: " + config.getInputFolderName() + "/" + config.getInputFileName());
+        log.info("Input file: " + config.getInputFolderName() + "/" + config.getInputFileName());
         Collection<File> files = FileUtils.listFiles(new File(config.getOutputFolderName()), exts, false);
         for (File bookFile: files) {
-            System.out.println("Output file name: " + bookFile.getName());
+//            System.out.println("Output file name: " + bookFile.getName());
+            log.info("Output file name: " + bookFile.getName());
             int cellOffset = 4;
             if (bookFile.getName().startsWith("other")) cellOffset = 2;
             HSSFWorkbook outBook = new HSSFWorkbook(new FileInputStream(bookFile));
@@ -117,20 +132,7 @@ public class Main {
             else countOfFalse++;
         }
 
-//        System.out.println("true: " + countOfTrue);
-//        System.out.println("false: " + countOfFalse);
-//
-//        System.out.println();
-//        System.out.println();
-//        System.out.println();
-//
-//        for (Map.Entry<String, Boolean> entry : SheetsProcessor.hasOutputMap.entrySet()) {
-//                System.out.println(entry.getValue() + ": " + entry.getKey());
-//        }
-
-
+        log.info("Main finished");
     }
-
-
 
 }

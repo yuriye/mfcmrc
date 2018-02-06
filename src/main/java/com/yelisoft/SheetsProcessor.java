@@ -11,8 +11,13 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class SheetsProcessor {
+
+    private static final Logger log = LoggerFactory.getLogger(SheetsProcessor.class);
 
     public static Map<String, Boolean> hasOutputMap = new HashMap<>();
 
@@ -20,6 +25,7 @@ public class SheetsProcessor {
                                HSSFSheet outSheet,
                                int outServiceNameColumn,
                                String auth) throws IOException {
+
 
         Config config = Config.getInstance();
         Map<String, Integer> inServiceRow = new HashMap<>();
@@ -32,7 +38,14 @@ public class SheetsProcessor {
         int outColumnOfTotalCell = outServiceNameColumn + 5;
         int consultRowNumber = 0;
 
-        //ВЫДАЧА ЗА НОЯБРЬ
+        int totalNumberOfOrdersColumn = 9;
+        int totalResultsIssuedToApplicants = 15;
+
+        int numberOfOrdersFormedForRosreestr = 6;
+        int numberOfClosedOrdersForRosreestr = 10;
+
+
+        //ВЫДАЧА ЗА ...
         String vydZa = "ВЫДАЧА ЗА " + config.getMonth().toUpperCase();
         for (dataColumn = 7; dataColumn < 100; dataColumn++) {
             if (vydZa.equals(inSheet.getRow(inSheetStartRow - 2)
@@ -40,7 +53,8 @@ public class SheetsProcessor {
                     .getStringCellValue()
                     .toUpperCase())) {
                 vydachaColumn = dataColumn;
-                System.out.println("vydachaColumn=" + vydachaColumn);
+//                System.out.println("vydachaColumn=" + vydachaColumn);
+                log.info("vydachaColumn=" + vydachaColumn);
                 break;
             }
 
@@ -71,6 +85,7 @@ public class SheetsProcessor {
                 }
 
             } catch (Exception e) {
+                log.error("inSheet scaning row==" + row, e);
                 e.printStackTrace();
             }
 
@@ -81,7 +96,8 @@ public class SheetsProcessor {
             inServiceRow.put(inServiceName, i);
         }
 
-        System.out.println(inSheet.getSheetName() + "->" + outSheet.getSheetName());
+//        System.out.println(inSheet.getSheetName() + "->" + outSheet.getSheetName());
+        log.info(inSheet.getSheetName() + "->" + outSheet.getSheetName());
         for (int dataRowNumber = 7; true; dataRowNumber++) {
 
             if (CellType.STRING.equals(outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn - 1).getCellTypeEnum())) {
@@ -105,9 +121,47 @@ public class SheetsProcessor {
                     .equals(outService)) {
                 outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 2).setCellValue(sumOf3cell);
 //                outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 3).setCellValue(sumVydachOf3cell);
-                System.out.println("sumOf3cell = " + sumOf3cell);
-                System.out.println("sumVydachOf3cell = " + sumVydachOf3cell);
+//                System.out.println("sumOf3cell = " + sumOf3cell);
+//                System.out.println("sumVydachOf3cell = " + sumVydachOf3cell);
+                log.info("inSheet.getSheetName() == " + inSheet.getSheetName() + ", outSheet.getSheetName() == " + outSheet.getSheetName()
+                        + ": sumOf3cell == " + sumOf3cell + "\t" + "sumVydachOf3cell == " + sumVydachOf3cell);
                 continue;
+            }
+
+            int rosreestrRowNumber1 = consultRowNumber + 5;
+            int rosreestrRowNumber2 = consultRowNumber + 6;
+            int rosreestrColumn1 = 0;
+            log.info(inSheet.getSheetName() + " rosreestrRowNumber1 == " + rosreestrRowNumber1);
+            for(int i = 0; i < 100; i++) {
+                XSSFCell xcell = inSheet.getRow(rosreestrRowNumber1).getCell(i);
+                if (null == xcell) {
+                    log.info("i == " + i + " null == xcell");
+                    continue;
+                }
+                if (CellType.STRING.equals(xcell.getCellTypeEnum()) &&
+                        xcell.getStringCellValue().startsWith("Гос")) {
+                    rosreestrColumn1 = i;
+                    break;
+                }
+            }
+            log.info("rosreestrColumn1 == " + rosreestrColumn1);
+            if(rosreestrColumn1 == 0) {
+                log.error("Не нашли ячейку для росреестра");
+            }
+
+            if ("Государственный кадастровый учет и (или) государственная регистрация прав на недвижимое имущество"
+                    .equals(outService)) {
+                copyXToHCell(inSheet.getRow(rosreestrRowNumber1).getCell(rosreestrColumn1),
+                        outSheet.getRow(dataRowNumber).getCell(numberOfOrdersFormedForRosreestr));
+                copyXToHCell(inSheet.getRow(rosreestrRowNumber1).getCell(rosreestrColumn1 + 1),
+                        outSheet.getRow(dataRowNumber).getCell(numberOfClosedOrdersForRosreestr));
+            }
+            if ("Предоставление сведений, содержащихся в Едином государственном реестре недвижимости"
+                    .equals(outService)) {
+                copyXToHCell(inSheet.getRow(rosreestrRowNumber2).getCell(rosreestrColumn1),
+                        outSheet.getRow(dataRowNumber).getCell(numberOfOrdersFormedForRosreestr));
+                copyXToHCell(inSheet.getRow(rosreestrRowNumber2).getCell(rosreestrColumn1 + 1),
+                        outSheet.getRow(dataRowNumber).getCell(numberOfClosedOrdersForRosreestr));
             }
 
             String inService;
@@ -151,11 +205,11 @@ public class SheetsProcessor {
             XSSFCell inDataCell = inRow.getCell(dataColumn);
             if (null == inDataCell) continue;
 
-            copyXToHCell(inDataCell, outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 2));
+            copyXToHCell(inDataCell, outSheet.getRow(dataRowNumber).getCell( totalNumberOfOrdersColumn));
 
             if (config.hasOutputForService(outService)) {
                 copyXToHCell(inRow.getCell(vydachaColumn),
-                        outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 3));
+                        outSheet.getRow(dataRowNumber).getCell(totalResultsIssuedToApplicants));
                 hasOutputMap.put(outService, true);
             }
             else {
