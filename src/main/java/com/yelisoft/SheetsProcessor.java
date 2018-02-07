@@ -182,10 +182,11 @@ public class SheetsProcessor {
                 continue;
             }
             String outService = outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn).getStringCellValue();
+            log.info("Для outService dataRowNumber == {} outServiceNameColumn == {}", dataRowNumber, outServiceNameColumn);
             log.info(outService);
             if ("Регистрация, подтверждение личности, восстановление доступа граждан в Единой системе идентификации и аутентификации (ЕСИА)"
                     .equals(outService)) {
-                outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 2).setCellValue(sumOf3cell);
+                outSheet.getRow(dataRowNumber).getCell(totalNumberOfOrdersColumn).setCellValue(sumOf3cell);
                 continue;
             }
 
@@ -231,7 +232,7 @@ public class SheetsProcessor {
                             sumVydachOfCells += inRow.getCell(vydachaColumn).getNumericCellValue();
                         }
 
-                outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 2).setCellValue(sumOfCell);
+                outSheet.getRow(dataRowNumber).getCell(totalNumberOfOrdersColumn).setCellValue(sumOfCell);
 //                outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 3).setCellValue(sumVydachOfCells);
                 continue;
             }

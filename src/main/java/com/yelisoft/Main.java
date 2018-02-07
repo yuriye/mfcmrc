@@ -102,7 +102,7 @@ public class Main {
 //            System.out.println("Output file name: " + bookFile.getName());
             log.info("Output file name: " + bookFile.getName());
             int cellOffset = 4;
-            if (bookFile.getName().startsWith("other")) cellOffset = 2;
+//            if (bookFile.getName().startsWith("other")) cellOffset = 2;
             HSSFWorkbook outBook = new HSSFWorkbook(new FileInputStream(bookFile));
             int numberOfSheets = outBook.getNumberOfSheets();
             for (int i = 0; i < numberOfSheets; i++) {
