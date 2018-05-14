@@ -17,12 +17,15 @@ public class Config {
     private static Config instance;
 
     private Map<String, String> sheetsMap = new HashMap<>();
-    private String inputFolderName = "C:/mfcmrc";
+    private String inputFolderName = "C:\\mfcmrc";
     private String templatesFolderName = "templates";
     private String outputFolderName = "out";
     private String pagesComplianceFileName = "pagescompliance.xlsx";
-    private String inputFileName = "АКТУАЛЬНЫЙ МФЦ  2017 ЗАКРЫТЫЙ Октябрь.xlsx";
-    private String month = "октябрь";
+//    private String inputFileName = "АКТУАЛЬНЫЙ МФЦ  2017 ЗАКРЫТЫЙ Октябрь.xlsx";
+//    private String month = "октябрь";
+    private String inputFileName = "+++";
+    private String month = "";
+
     private String servicesComplianceFileName = "соответствия.xlsx";
     private Map<String, String> servicesOutToInMap = new HashMap<>();
     private Map<String, Boolean> hasOutputOfDocs = new HashMap<>();
@@ -138,7 +141,7 @@ public class Config {
     }
 
     public String getOutputFolderName() {
-        return inputFolderName + "/" + outputFolderName;
+        return inputFolderName + "\\" + outputFolderName;
     }
 
     public void setOutputFolderName(String outputFolderName) {
@@ -202,7 +205,7 @@ public class Config {
     }
 
     public String getFullServicesComplianceFileName() {
-        return inputFolderName + "/" + servicesComplianceFileName;
+        return inputFolderName + "\\" + servicesComplianceFileName;
     }
 
 }

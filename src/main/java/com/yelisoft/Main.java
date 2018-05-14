@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 public class Main {
     private static final Logger log = LoggerFactory.getLogger(Main.class);
 
+
     public static void main(String[] args) throws IOException {
 //        try {
 //            LogManager.getLogManager().readConfiguration(
@@ -34,9 +35,11 @@ public class Main {
         log.info("Main started");
 
         Config config = Config.getInstance();
+        String configFileName = "C:/mfcmrc/config.cfg";
         if(args.length > 0) {
-            config.initFromFile(args[0]);
+            configFileName = args[0];
         }
+        config.initFromFile(configFileName);
 
         XSSFWorkbook pagesComplianceBook = new XSSFWorkbook(new FileInputStream(config.getFullPagesComplianceFileName()));
         XSSFSheet pagesComplianceSheet = pagesComplianceBook.getSheetAt(0);
