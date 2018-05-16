@@ -25,12 +25,6 @@ public class Main {
 
 
     public static void main(String[] args) throws IOException {
-//        try {
-//            LogManager.getLogManager().readConfiguration(
-//                    com.yelisoft.Main.class.getResourceAsStream("logging.properties"));
-//        } catch (IOException e) {
-//            System.err.println("Could not setup logger configuration: " + e.toString());
-//        }
 
         log.info("Main started");
 
