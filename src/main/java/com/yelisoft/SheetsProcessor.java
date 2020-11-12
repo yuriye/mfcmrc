@@ -3,17 +3,16 @@ package com.yelisoft;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
-import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 
 public class SheetsProcessor {
@@ -194,8 +193,14 @@ public class SheetsProcessor {
 
             if ("Государственный кадастровый учет и (или) государственная регистрация прав на недвижимое имущество"
                     .equals(outService)) {
-                copyXToHCell(inSheet.getRow(rosreestrRowNumber2).getCell(rosreestrColumn1),
-                        outSheet.getRow(dataRowNumber).getCell(numberOfOrdersFormedForRosreestr));
+
+                copyXToHCell(
+                        inSheet
+                                .getRow(rosreestrRowNumber2)
+                                .getCell(rosreestrColumn1),
+                        outSheet
+                                .getRow(dataRowNumber)
+                                .getCell(numberOfOrdersFormedForRosreestr));
                 copyXToHCell(inSheet.getRow(rosreestrRowNumber2).getCell(rosreestrColumn1 + 1),
                         outSheet.getRow(dataRowNumber).getCell(numberOfClosedOrdersForRosreestr));
             }

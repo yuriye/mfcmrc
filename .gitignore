@@ -1,0 +1,7 @@
+.idea
+.idea/libraries/*.xml
+out
+target
+*.iml
+log
+*.patch

@@ -71,6 +71,7 @@
             <version>3.17</version>
             <scope>compile</scope>
         </dependency>
+
         <!-- https://mvnrepository.com/artifact/org.apache.poi/poi-ooxml -->
         <dependency>
             <groupId>org.apache.poi</groupId>
@@ -106,6 +107,6 @@
             <version>${logback.version}</version>
             <scope>runtime</scope>
         </dependency>
-
     </dependencies>
+
 </project>
