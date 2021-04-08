@@ -191,7 +191,8 @@ public class SheetsProcessor {
             }
 
 
-            if ("Государственный кадастровый учет и (или) государственная регистрация прав на недвижимое имущество"
+            //if ("Государственный кадастровый учет и (или) государственная регистрация прав на недвижимое имущество"
+            if ("Государственный кадастровый учет недвижимого имущества и (или) государственная регистрация прав на недвижимое имущество"
                     .equals(outService)) {
 
                 copyXToHCell(
@@ -204,6 +205,7 @@ public class SheetsProcessor {
                 copyXToHCell(inSheet.getRow(rosreestrRowNumber2).getCell(rosreestrColumn1 + 1),
                         outSheet.getRow(dataRowNumber).getCell(numberOfClosedOrdersForRosreestr));
             }
+            //if ("Предоставление сведений, содержащихся в Едином государственном реестре недвижимости"
             if ("Предоставление сведений, содержащихся в Едином государственном реестре недвижимости"
                     .equals(outService)) {
                 copyXToHCell(inSheet.getRow(rosreestrRowNumber1).getCell(rosreestrColumn1),
