@@ -37,20 +37,20 @@ public class SheetsProcessor {
         int dataColumn;
         int vydachaColumn = 19;
         int outRowOfTotalCell = 0;
-        int outColumnOfTotalCell = outServiceNameColumn + 12;
+        int outColumnOfTotalCell = outServiceNameColumn + 14;
         int consultRowNumber = 0;
 
-        int totalNumberOfOrdersColumn = 9;
-        int totalResultsIssuedToApplicants = 15;
+        int totalNumberOfOrdersColumn = 10;
+        int totalResultsIssuedToApplicants = 17;
 
         int numberOfOrdersFormedForRosreestr = 6;
-        int numberOfClosedOrdersForRosreestr = 10;
+        int numberOfClosedOrdersForRosreestr = 11;
 
         //Ищем стартовую строу
         for (inSheetStartRow = 6; true; inSheetStartRow++) {
             if (inSheet.getRow(inSheetStartRow) == null) break;
             if (inSheet.getRow(inSheetStartRow).getCell(0) == null) continue;
-            if(CellType.NUMERIC.equals(inSheet.getRow(inSheetStartRow).getCell(0).getCellTypeEnum())) {
+            if (CellType.NUMERIC.equals(inSheet.getRow(inSheetStartRow).getCell(0).getCellTypeEnum())) {
                 if (inSheet.getRow(inSheetStartRow).getCell(0).getNumericCellValue() == 1)
                     break;
             }
@@ -84,17 +84,18 @@ public class SheetsProcessor {
                 if (null != row.getCell(0) && CellType.STRING.equals(row.getCell(0).getCellTypeEnum())) {
                     String cell1Value = row.getCell(0).getStringCellValue();
                     cell1Value = cell1Value == null ? "" : cell1Value;
-                    if ("Прием запросов на регистрацию на портале Gosuslugi.ru".equals(cell1Value)
-                            || "Прием запросов на подтверждение регистрации на портале Gosuslugi.ru".equals(cell1Value)
-                            || "Восстановление регистрации на портале Gosuslugi.ru".equals(cell1Value)) {
-                        sumOf3cell += null == row.getCell(dataColumn)? 0: row.getCell(dataColumn).getNumericCellValue();
-                        sumVydachOf3cell += null == row.getCell(vydachaColumn)? 0: row.getCell(vydachaColumn).getNumericCellValue();
+//                    if ("Прием запросов на регистрацию на портале Gosuslugi.ru".equals(cell1Value)
+//                            || "Прием запросов на подтверждение регистрации на портале Gosuslugi.ru".equals(cell1Value)
+//                            || "Восстановление регистрации на портале Gosuslugi.ru".equals(cell1Value)) {
+                    if (cell1Value.indexOf("osuslugi.ru") > 0) {
+                        sumOf3cell += null == row.getCell(dataColumn) ? 0 : row.getCell(dataColumn).getNumericCellValue();
+                        sumVydachOf3cell += null == row.getCell(vydachaColumn) ? 0 : row.getCell(vydachaColumn).getNumericCellValue();
                     }
 //                    else if ("КОНСУЛЬТАЦИИ".equals(cell1Value.toUpperCase()))
 //                        consultRowNumber = row.getRowNum();
                 }
             } catch (Exception e) {
-                log.error("inSheet scaning row== {} {}",row, e);
+                log.error("inSheet scaning row== {} {}", row, e);
                 e.printStackTrace();
             }
 
@@ -110,7 +111,6 @@ public class SheetsProcessor {
             }
 
 
-
             XSSFCell cell = row.getCell(inServiceNameColumn);
             if (cell == null) continue;
             String inServiceName = cell.getStringCellValue();
@@ -123,15 +123,16 @@ public class SheetsProcessor {
         int rosreestrColumn1 = 0;
         int rosreestrRowNumber1;
         rr:
-        for(rosreestrRowNumber1 = consultRowNumber + 1; rosreestrRowNumber1 < 1000; rosreestrRowNumber1++) {
+        for (rosreestrRowNumber1 = consultRowNumber + 1; rosreestrRowNumber1 < 1000; rosreestrRowNumber1++) {
             for (int column = 0; column < vydachaColumn; column++) {
                 XSSFCell cell = null;
                 try {
                     cell = inSheet.getRow(rosreestrRowNumber1).getCell(column);
-                } catch (Exception e) {}
-                if(cell == null) continue;
+                } catch (Exception e) {
+                }
+                if (cell == null) continue;
                 if (CellType.STRING.equals(cell.getCellTypeEnum()))
-                    if(cell.getStringCellValue().startsWith("Гос")) {
+                    if (cell.getStringCellValue().startsWith("Гос")) {
                         rosreestrColumn1 = column;
                         break rr;
                     }
@@ -140,7 +141,7 @@ public class SheetsProcessor {
         int rosreestrRowNumber2 = rosreestrRowNumber1 + 1;
         log.info("{}: rosreestrColumn1 == {}  rosreestrRowNumber1 == {}  rosreestrRowNumber2 == {}", inSheet.getSheetName(), rosreestrColumn1, rosreestrRowNumber1, rosreestrRowNumber2);
 
-        for(int i = 0; i < 100; i++) {
+        for (int i = 0; i < 100; i++) {
             XSSFCell xcell = inSheet.getRow(rosreestrRowNumber1).getCell(i);
             if (null == xcell) {
                 continue;
@@ -152,7 +153,7 @@ public class SheetsProcessor {
             }
         }
 
-        if(rosreestrColumn1 == 0) {
+        if (rosreestrColumn1 == 0) {
             log.error("Не нашли ячейку для росреестра");
         }
 
@@ -160,9 +161,9 @@ public class SheetsProcessor {
 
 
         for (int dataRowNumber = 7; true; dataRowNumber++) {
-            if(null != outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn - 1)
+            if (null != outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn - 1)
                     && CellType.STRING.equals(outSheet.getRow(dataRowNumber)
-                            .getCell(outServiceNameColumn - 1).getCellTypeEnum())) {
+                    .getCell(outServiceNameColumn - 1).getCellTypeEnum())) {
                 if (outSheet.getRow(dataRowNumber)
                         .getCell(outServiceNameColumn - 1)
                         .getStringCellValue().startsWith("Общее")) {
@@ -256,14 +257,13 @@ public class SheetsProcessor {
             XSSFCell inDataCell = inRow.getCell(dataColumn);
             if (null == inDataCell) continue;
 
-            copyXToHCell(inDataCell, outSheet.getRow(dataRowNumber).getCell( totalNumberOfOrdersColumn));
+            copyXToHCell(inDataCell, outSheet.getRow(dataRowNumber).getCell(totalNumberOfOrdersColumn));
 
             if (config.hasOutputForService(outService)) {
                 copyXToHCell(inRow.getCell(vydachaColumn),
                         outSheet.getRow(dataRowNumber).getCell(totalResultsIssuedToApplicants));
                 hasOutputMap.put(outService, true);
-            }
-            else {
+            } else {
                 hasOutputMap.put(outService, false);
             }
             if ("".equals(outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn).getStringCellValue())) break;
@@ -280,10 +280,10 @@ public class SheetsProcessor {
         int inTotlFedColumn;
         for (inTotlFedColumn = 3; inTotlFedColumn < vydachaColumn; inTotlFedColumn++) {
             XSSFCell cell = inSheet.getRow(consultRowNumber - 1).getCell(inTotlFedColumn);
-            if ( null == cell) continue;
+            if (null == cell) continue;
             if (!CellType.STRING.equals(cell.getCellTypeEnum())) continue;
 
-            if ( inSheet.getRow(consultRowNumber - 1).getCell(inTotlFedColumn).getStringCellValue().toUpperCase().startsWith("ФЕДЕР"))
+            if (inSheet.getRow(consultRowNumber - 1).getCell(inTotlFedColumn).getStringCellValue().toUpperCase().startsWith("ФЕДЕР"))
                 break;
         }
 
@@ -300,8 +300,8 @@ public class SheetsProcessor {
             sourceCell = inSheet.getRow(consultRowNumber).getCell(inTotlFedColumn + 3);
             destinationCell = outSheet.getRow(outRowOfTotalCell).getCell(outColumnOfTotalCell);
         }
-        log.info("consultRowNumber == {}    inTotlFedColumn == {} ",consultRowNumber ,inTotlFedColumn);
-        log.info("Totals: {}, {}, {}.", auth,sourceCell, destinationCell);
+        log.info("consultRowNumber == {}    inTotlFedColumn == {} ", consultRowNumber, inTotlFedColumn);
+        log.info("Totals: {}, {}, {}.", auth, sourceCell, destinationCell);
 
         copyXToHCell(sourceCell, destinationCell);
 
@@ -314,7 +314,7 @@ public class SheetsProcessor {
             log.info("sourceCell == null на входе copyXToHCell");
             return;
         }
-        if(destinationCell == null) {
+        if (destinationCell == null) {
             log.info("destinationCell == null на входе copyXToHCell");
             return;
         }

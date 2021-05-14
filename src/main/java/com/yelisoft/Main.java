@@ -66,13 +66,17 @@ public class Main {
             }
 
             tmp = tmp.trim();
-            if (tmp.length() > 15)
+            if (tmp.length() > 15) {
                 tmp = "нет выдачи через МФЦ";
-            else
+                config.setOutputForService(outService, false);
+            }
+            else {
                 tmp = "";
-            if (!"нет выдачи через МФЦ".equals(tmp))
-                tmp = "";
-            config.setOutputForService(outService, "нет выдачи через МФЦ".equals(tmp)? false: true);
+                config.setOutputForService(outService, true);
+            }
+//            if (!"нет выдачи через МФЦ".equals(tmp))
+//                tmp = "";
+//            config.setOutputForService(outService, "нет выдачи через МФЦ".equals(tmp)? false: true);
 
             count = i - 2;
         }
