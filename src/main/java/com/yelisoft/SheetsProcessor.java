@@ -24,10 +24,10 @@ public class SheetsProcessor {
     public static void process(XSSFSheet inSheet,
                                HSSFSheet outSheet,
                                int outServiceNameColumn,
-                               String auth) throws IOException {
+                               String auth, String outFileName) throws IOException {
 
         log.info("Started for {} -> {} ----------------------------------------------",
-                inSheet.getSheetName(), outSheet.getSheetName());
+                inSheet.getSheetName(), outFileName + " " + outSheet.getSheetName());
 
         Config config = Config.getInstance();
         Map<String, Integer> inServiceRow = new HashMap<>();
@@ -205,6 +205,19 @@ public class SheetsProcessor {
                                 .getCell(numberOfOrdersFormedForRosreestr));
                 copyXToHCell(inSheet.getRow(rosreestrRowNumber2).getCell(rosreestrColumn1 + 1),
                         outSheet.getRow(dataRowNumber).getCell(numberOfClosedOrdersForRosreestr));
+
+                //Проверяем на файл federal_subject_mfc
+                if (outFileName.startsWith("federal_subject_mfc")) {
+                    copyXToHCell(
+                            inSheet
+                                    .getRow(rosreestrRowNumber2 + 3)
+                                    .getCell(rosreestrColumn1),
+                            outSheet
+                                    .getRow(dataRowNumber)
+                                    .getCell(numberOfOrdersFormedForRosreestr + 1));
+                    copyXToHCell(inSheet.getRow(rosreestrRowNumber2 + 3).getCell(rosreestrColumn1 + 1),
+                            outSheet.getRow(dataRowNumber).getCell(numberOfClosedOrdersForRosreestr + 1));
+                }
             }
             //if ("Предоставление сведений, содержащихся в Едином государственном реестре недвижимости"
             if ("Предоставление сведений, содержащихся в Едином государственном реестре недвижимости"
@@ -250,8 +263,6 @@ public class SheetsProcessor {
             inService = config.getInForOutService(outService);
             if (null == inService) continue;
 
-//            System.out.println("inService:" + inService );
-//            System.out.println("row=" + inServiceRow.get(inService));
             if (null == inServiceRow.get(inService)) continue;
             XSSFRow inRow = inSheet.getRow(inServiceRow.get(inService));
             XSSFCell inDataCell = inRow.getCell(dataColumn);

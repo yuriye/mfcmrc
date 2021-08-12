@@ -4,6 +4,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -40,9 +41,16 @@ public class Main {
         for (int i = 0; true; i++) {
             XSSFRow row = pagesComplianceSheet.getRow(i);
             if (null == row) break;
-            String val0 = row.getCell(0).getStringCellValue();
+            String val0 = "";
+            if (row.getCell(0).getCellTypeEnum() == CellType.NUMERIC) {
+                val0 = row.getCell(0).getRawValue();
+            }
+            else {
+                val0 = row.getCell(0).getStringCellValue();
+            }
             if ("".equals(val0)) break;
             config.setComplianceSheetName(val0, row.getCell(1).getStringCellValue());
+            log.info("Compliance Sheet Pair: " + row.getCell(1).getStringCellValue() + " -> " + val0 );
         }
 
         XSSFWorkbook servicesComplianceBook = new XSSFWorkbook(new FileInputStream(config.getFullServicesComplianceFileName()));
@@ -116,7 +124,7 @@ public class Main {
                 if(bookFile.getName().startsWith("fed")) auth = "fed";
                 else if(bookFile.getName().startsWith("reg")) auth = "reg";
                 else if(bookFile.getName().startsWith("oth")) auth = "oth";
-                SheetsProcessor.process(inSheet, outSheet, cellOffset, auth);
+                SheetsProcessor.process(inSheet, outSheet, cellOffset, auth, bookFile.getName());
             }
             FileOutputStream outStream = new FileOutputStream(bookFile);
             outBook.write(outStream);
