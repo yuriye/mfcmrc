@@ -21,8 +21,6 @@ public class Config {
     private String templatesFolderName = "templates";
     private String outputFolderName = "out";
     private String pagesComplianceFileName = "pagescompliance.xlsx";
-//    private String inputFileName = "АКТУАЛЬНЫЙ МФЦ  2017 ЗАКРЫТЫЙ Октябрь.xlsx";
-//    private String month = "октябрь";
     private String inputFileName = "+++";
     private String month = "";
 
@@ -65,7 +63,6 @@ public class Config {
         line = br.readLine();
         while (true) {
             line = br.readLine();
-//            System.out.println(line);
             log.debug(line);
             if (null == line) break;
             if ("".equals(line)) continue;
@@ -73,7 +70,6 @@ public class Config {
             if (line.startsWith("//")) continue;
             String[] array = line.split("=");
             if(array.length < 2) {
-//                System.out.println("Неправильная строка каонфигурации:" + line);
                 log.debug("Неправильная строка каонфигурации:" + line);
                 continue;
             }
@@ -98,6 +94,7 @@ public class Config {
                     inputFileName = array[1];
                     break;
                 case "servicesComplianceFileName":
+                    servicesComplianceFileName = array[1];
                     break;
             }
         }

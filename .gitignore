@@ -1,6 +1,9 @@
 .idea/
+.idea
 out
 target
 *.iml
+logs
+*.log
 log
 *.patch!/.idea/

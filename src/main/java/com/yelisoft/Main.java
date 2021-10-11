@@ -8,33 +8,29 @@ import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Map;
-import java.util.logging.LogManager;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 
 public class Main {
     private static final Logger log = LoggerFactory.getLogger(Main.class);
+    private static Set<String> absents = new HashSet<>();
 
 
     public static void main(String[] args) throws IOException {
 
-        log.info("Main started");
-
         Config config = Config.getInstance();
         String configFileName = "C:/mfcmrc/config.cfg";
-        if(args.length > 0) {
+        if (args.length > 0) {
             configFileName = args[0];
         }
         config.initFromFile(configFileName);
+        String base = config.getInputFolderName();
 
         XSSFWorkbook pagesComplianceBook = new XSSFWorkbook(new FileInputStream(config.getFullPagesComplianceFileName()));
         XSSFSheet pagesComplianceSheet = pagesComplianceBook.getSheetAt(0);
@@ -44,13 +40,11 @@ public class Main {
             String val0 = "";
             if (row.getCell(0).getCellTypeEnum() == CellType.NUMERIC) {
                 val0 = row.getCell(0).getRawValue();
-            }
-            else {
+            } else {
                 val0 = row.getCell(0).getStringCellValue();
             }
             if ("".equals(val0)) break;
             config.setComplianceSheetName(val0, row.getCell(1).getStringCellValue());
-            log.info("Compliance Sheet Pair: " + row.getCell(1).getStringCellValue() + " -> " + val0 );
         }
 
         XSSFWorkbook servicesComplianceBook = new XSSFWorkbook(new FileInputStream(config.getFullServicesComplianceFileName()));
@@ -65,54 +59,45 @@ public class Main {
             String inService = row.getCell(1).getStringCellValue();
             if ("".equals(inService)) continue;
             config.setInForOutService(outService, inService);
+
             String tmp = "";
             try {
                 tmp = row.getCell(2).getStringCellValue();
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 tmp = "";
             }
 
             tmp = tmp.trim();
             if (tmp.length() > 15) {
-                tmp = "нет выдачи через МФЦ";
                 config.setOutputForService(outService, false);
-            }
-            else {
-                tmp = "";
+            } else {
                 config.setOutputForService(outService, true);
             }
-//            if (!"нет выдачи через МФЦ".equals(tmp))
-//                tmp = "";
-//            config.setOutputForService(outService, "нет выдачи через МФЦ".equals(tmp)? false: true);
-
-            count = i - 2;
         }
 
         System.out.println(config.getOutputFolderName());
         FileUtils.deleteDirectory(new File(config.getOutputFolderName()));
         FileUtils.copyDirectory(new File(config.getInputFolderName() + "/" + config.getTemplatesFolderName())
-                ,new File(config.getOutputFolderName())
-                ,new WildcardFileFilter("feder*.xls*"));
+                , new File(config.getOutputFolderName())
+                , new WildcardFileFilter("feder*.xls*"));
         FileUtils.copyDirectory(new File(config.getInputFolderName() + "/" + config.getTemplatesFolderName())
-                ,new File(config.getOutputFolderName())
-                ,new WildcardFileFilter("region*.xls*"));
+                , new File(config.getOutputFolderName())
+                , new WildcardFileFilter("region*.xls*"));
         FileUtils.copyDirectory(new File(config.getInputFolderName() + "/" + config.getTemplatesFolderName())
-                ,new File(config.getOutputFolderName())
-                ,new WildcardFileFilter("otherServ*.xls*"));
-        String[] exts = {"xls", "xlsx" };
+                , new File(config.getOutputFolderName())
+                , new WildcardFileFilter("otherServ*.xls*"));
+        String[] exts = {"xls", "xlsx"};
 
         FileInputStream fileInputStream = new FileInputStream(config.getInputFolderName() + "/" + config.getInputFileName());
         XSSFWorkbook inBook = new XSSFWorkbook(fileInputStream);
-        //System.out.println("Input file: " + config.getInputFolderName() + "/" + config.getInputFileName());
         log.info("Input file: " + config.getInputFolderName() + "/" + config.getInputFileName());
         Collection<File> files = FileUtils.listFiles(new File(config.getOutputFolderName()), exts, false);
-        for (File bookFile: files) {
-//            System.out.println("Output file name: " + bookFile.getName());
-            log.info("Output file name: " + bookFile.getName());
+
+        for (File bookFile : files) {
+            log.info("Output file name: " + bookFile.getCanonicalFile());
             int cellOffset = 4;
-//            if (bookFile.getName().startsWith("other")) cellOffset = 2;
             HSSFWorkbook outBook = new HSSFWorkbook(new FileInputStream(bookFile));
+            log.info("outBook.isWriteProtected() = {}", outBook.isWriteProtected());
             int numberOfSheets = outBook.getNumberOfSheets();
             for (int i = 0; i < numberOfSheets; i++) {
                 HSSFSheet outSheet = outBook.getSheetAt(i);
@@ -121,10 +106,11 @@ public class Main {
                 XSSFSheet inSheet = inBook.getSheet(inSheetName);
                 if (null == inSheet) continue;
                 String auth = "";
-                if(bookFile.getName().startsWith("fed")) auth = "fed";
-                else if(bookFile.getName().startsWith("reg")) auth = "reg";
-                else if(bookFile.getName().startsWith("oth")) auth = "oth";
+                if (bookFile.getName().startsWith("fed")) auth = "fed";
+                else if (bookFile.getName().startsWith("reg")) auth = "reg";
+                else if (bookFile.getName().startsWith("oth")) auth = "oth";
                 SheetsProcessor.process(inSheet, outSheet, cellOffset, auth, bookFile.getName());
+                absents.addAll(SheetsProcessor.getAbsents());
             }
             FileOutputStream outStream = new FileOutputStream(bookFile);
             outBook.write(outStream);
@@ -133,15 +119,20 @@ public class Main {
         }
         inBook.close();
 
-        int countOfFalse = 0;
-        int countOfTrue = 0;
-        for (Map.Entry<String, Boolean> entry : config.getHasOutputOfDocs().entrySet()) {
-            if(entry.getValue())
-                countOfTrue++;
-            else countOfFalse++;
-        }
-
+        FileWriter writer = new FileWriter(config.getOutputFolderName() + "/отсутствующие услуги.csv");
+        writer.write("Наименование\n");
+        absents.stream().forEach(s -> writeAbsent(writer, s));
+        writer.flush();
+        writer.close();
         log.info("Main finished");
+    }
+
+    public static void writeAbsent(FileWriter writer, String s) {
+        try {
+            writer.write(s + "\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }

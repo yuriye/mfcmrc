@@ -1,7 +1,6 @@
 package com.yelisoft;
 
 import org.apache.poi.hssf.usermodel.HSSFCell;
-import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.xssf.usermodel.XSSFCell;
@@ -12,14 +11,18 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
-
+import java.util.Set;
 
 public class SheetsProcessor {
 
     private static final Logger log = LoggerFactory.getLogger(SheetsProcessor.class);
+    private static Set<String> absents = new HashSet<>();
 
-    public static Map<String, Boolean> hasOutputMap = new HashMap<>();
+    public static Set<String> getAbsents() {
+        return absents;
+    }
 
     public static void process(XSSFSheet inSheet,
                                HSSFSheet outSheet,
@@ -32,13 +35,12 @@ public class SheetsProcessor {
         Config config = Config.getInstance();
         Map<String, Integer> inServiceRow = new HashMap<>();
 
-        int inServiceNameColumn = 1;
-        int inSheetStartRow = 10;
+        int inServiceNameColumn = 3;
+        int inSheetStartRow = 7;
         int dataColumn;
-        int vydachaColumn = 19;
-        int outRowOfTotalCell = 0;
+        int vydachaColumn = 0;
         int outColumnOfTotalCell = outServiceNameColumn + 14;
-        int consultRowNumber = 0;
+        String reportMonth = config.getMonth().toLowerCase();
 
         int totalNumberOfOrdersColumn = 10;
         int totalResultsIssuedToApplicants = 17;
@@ -46,7 +48,7 @@ public class SheetsProcessor {
         int numberOfOrdersFormedForRosreestr = 6;
         int numberOfClosedOrdersForRosreestr = 11;
 
-        //Ищем стартовую строу
+        //Ищем стартовую строку
         for (inSheetStartRow = 6; true; inSheetStartRow++) {
             if (inSheet.getRow(inSheetStartRow) == null) break;
             if (inSheet.getRow(inSheetStartRow).getCell(0) == null) continue;
@@ -56,288 +58,152 @@ public class SheetsProcessor {
             }
         }
 
-        //ВЫДАЧА ЗА ...
-        String vydZa = "ВЫДАЧА ЗА " + config.getMonth().toUpperCase();
-        for (dataColumn = 7; dataColumn < 100; dataColumn++) {
+        //Найти колонку данных (выдача, приём, консультации)
+        String capMonth = reportMonth.substring(0, 1).toUpperCase() + reportMonth.substring(1).toLowerCase();
+        for (dataColumn = 8; dataColumn < 100; dataColumn++) {
             XSSFCell cell = inSheet.getRow(inSheetStartRow - 2)
                     .getCell(dataColumn);
             if (null == cell) continue;
-            if (vydZa.equals(cell.getStringCellValue().toUpperCase())) {
-                vydachaColumn = dataColumn;
+            if (capMonth.equalsIgnoreCase(cell.getStringCellValue())) {
+
                 break;
             }
         }
-        //Поиск номера колонки за отчетный месяц
-        for (dataColumn = 7; dataColumn < vydachaColumn; dataColumn++) {
-            if (config.getMonth().toUpperCase().equals(
-                    inSheet.getRow(inSheetStartRow - 2).getCell(dataColumn).getStringCellValue().toUpperCase()))
-                break;
+        vydachaColumn = dataColumn + 1;
+        if (dataColumn >= 100) {
+            log.info("Не найдены колонки данных для месяца {}. Выход из программы", capMonth);
         }
-        log.info("dataColumn == " + dataColumn + ", vydachaColumn == " + vydachaColumn);
 
-        int sumOf3cell = 0;
-        int sumVydachOf3cell = 0;
-        for (int i = inSheetStartRow; true; i++) {
+        int sumRosreestrUchTotal = 0;
+        int sumRosreestrUchExterrTotal = 0;
+        int sumRosreestrUchClosed = 0;
+        int sumRosreestrUchExterrClosed = 0;
+        int sumRosreestrSvedTotal = 0;
+        int sumRosreestrSvedClosed = 0;
+
+        for (int i = inSheetStartRow; i < 2000; i++) {  //2000 - защита от зацикливания
             XSSFRow row = inSheet.getRow(i);
             if (null == row) break;
-            try {
-                if (null != row.getCell(0) && CellType.STRING.equals(row.getCell(0).getCellTypeEnum())) {
-                    String cell1Value = row.getCell(0).getStringCellValue();
-                    cell1Value = cell1Value == null ? "" : cell1Value;
-//                    if ("Прием запросов на регистрацию на портале Gosuslugi.ru".equals(cell1Value)
-//                            || "Прием запросов на подтверждение регистрации на портале Gosuslugi.ru".equals(cell1Value)
-//                            || "Восстановление регистрации на портале Gosuslugi.ru".equals(cell1Value)) {
-                    if (cell1Value.indexOf("osuslugi.ru") > 0) {
-                        sumOf3cell += null == row.getCell(dataColumn) ? 0 : row.getCell(dataColumn).getNumericCellValue();
-                        sumVydachOf3cell += null == row.getCell(vydachaColumn) ? 0 : row.getCell(vydachaColumn).getNumericCellValue();
-                    }
-//                    else if ("КОНСУЛЬТАЦИИ".equals(cell1Value.toUpperCase()))
-//                        consultRowNumber = row.getRowNum();
-                }
-            } catch (Exception e) {
-                log.error("inSheet scaning row== {} {}", row, e);
-                e.printStackTrace();
-            }
-
-            // consultRowNumber
-            for (consultRowNumber = inSheet.getLastRowNum(); ; consultRowNumber--) {
-                if (null == inSheet.getRow(consultRowNumber)) continue;
-                XSSFCell cell = inSheet.getRow(consultRowNumber).getCell(0);
-                if (null == cell) continue;
-                if (!CellType.STRING.equals(cell.getCellTypeEnum())) continue;
-                if (cell.getStringCellValue().toUpperCase().startsWith("КОНСУЛЬТ")
-                        && cell.getStringCellValue().length() < 13)
-                    break;
-            }
-
-
             XSSFCell cell = row.getCell(inServiceNameColumn);
             if (cell == null) continue;
             String inServiceName = cell.getStringCellValue();
             if ("".equals(inServiceName) || null == inServiceName) continue;
             inServiceRow.put(inServiceName, i);
-        }
-        log.info("sumOf3cell == {}  sumVydachOf3cell == {}  consultRowNumber == {}", sumOf3cell, sumVydachOf3cell, consultRowNumber);
 
-        //Вычисление ячеек "В ПК ПВД"
-        int rosreestrColumn1 = 0;
-        int rosreestrRowNumber1;
-        rr:
-        for (rosreestrRowNumber1 = consultRowNumber + 1; rosreestrRowNumber1 < 1000; rosreestrRowNumber1++) {
-            for (int column = 0; column < vydachaColumn; column++) {
-                XSSFCell cell = null;
-                try {
-                    cell = inSheet.getRow(rosreestrRowNumber1).getCell(column);
-                } catch (Exception e) {
+            if ("(КАМЧАТСКИЙ КРАЙ) Государственная услуга по государственному кадастровому учету недвижимого имущества и (или) государственной регистрации прав на недвижимое имущество и сделок с ним"
+                    .equals(inServiceName) ||
+                    "(ЭКСТЕР) Государственная услуга по государственному кадастровому учету недвижимого имущества и (или) государственной регистрации прав на недвижимое имущество и сделок с ним"
+                            .equals(inServiceName)) {
+
+                sumRosreestrUchTotal += row.getCell(dataColumn).getNumericCellValue();
+                sumRosreestrUchClosed += row.getCell(vydachaColumn).getNumericCellValue();
+                if (inServiceName.startsWith("(Э")) {
+                    sumRosreestrUchExterrTotal += row.getCell(dataColumn).getNumericCellValue();
+                    ;
+                    sumRosreestrUchExterrClosed += row.getCell(vydachaColumn).getNumericCellValue();
                 }
-                if (cell == null) continue;
-                if (CellType.STRING.equals(cell.getCellTypeEnum()))
-                    if (cell.getStringCellValue().startsWith("Гос")) {
-                        rosreestrColumn1 = column;
-                        break rr;
-                    }
+
+            } else if ("Государственная услуга по предоставлению сведений, cодержащихся в Едином государственном реестре недвижимости (ЕГРН)"
+                    .equals(inServiceName)) {
+
+                sumRosreestrSvedTotal += row.getCell(dataColumn).getNumericCellValue();
+                sumRosreestrSvedClosed += row.getCell(vydachaColumn).getNumericCellValue();
             }
         }
-        int rosreestrRowNumber2 = rosreestrRowNumber1 + 1;
-        log.info("{}: rosreestrColumn1 == {}  rosreestrRowNumber1 == {}  rosreestrRowNumber2 == {}", inSheet.getSheetName(), rosreestrColumn1, rosreestrRowNumber1, rosreestrRowNumber2);
 
-        for (int i = 0; i < 100; i++) {
-            XSSFCell xcell = inSheet.getRow(rosreestrRowNumber1).getCell(i);
-            if (null == xcell) {
-                continue;
-            }
-            if (CellType.STRING.equals(xcell.getCellTypeEnum()) &&
-                    xcell.getStringCellValue().startsWith("Гос")) {
-                rosreestrColumn1 = i;
+        int outStringNumber = outServiceNameColumn - 1;
+        int dataRowNumber;
+        for (dataRowNumber = 7; true; dataRowNumber++) {
+            HSSFCell stringNumberCell = outSheet.getRow(dataRowNumber).getCell(outStringNumber);
+            if (null != stringNumberCell
+                    && CellType.STRING.equals(stringNumberCell.getCellTypeEnum())
+                    && stringNumberCell.getStringCellValue().startsWith("Общее")) {
                 break;
             }
-        }
 
-        if (rosreestrColumn1 == 0) {
-            log.error("Не нашли ячейку для росреестра");
-        }
-
-        rosreestrColumn1++;
-
-
-        for (int dataRowNumber = 7; true; dataRowNumber++) {
-            if (null != outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn - 1)
-                    && CellType.STRING.equals(outSheet.getRow(dataRowNumber)
-                    .getCell(outServiceNameColumn - 1).getCellTypeEnum())) {
-                if (outSheet.getRow(dataRowNumber)
-                        .getCell(outServiceNameColumn - 1)
-                        .getStringCellValue().startsWith("Общее")) {
-                    outRowOfTotalCell = dataRowNumber;
-                    break;
-                }
-            }
-
-            try {
-                HSSFRow row = outSheet.getRow(dataRowNumber);
-                if (null == row) break;
-                HSSFCell cell = row.getCell(outServiceNameColumn - 1);
-                if (cell == null) continue;
-//                int rowNumber = Integer.valueOf(cell.getStringCellValue());
-            } catch (NumberFormatException mfe) {
-                continue;
-            }
             String outService = outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn).getStringCellValue();
-            log.info("Для outService dataRowNumber == {} outServiceNameColumn == {}", dataRowNumber, outServiceNameColumn);
-            log.info(outService);
-            if ("Регистрация, подтверждение личности, восстановление доступа граждан в Единой системе идентификации и аутентификации (ЕСИА)"
-                    .equals(outService)) {
-                outSheet.getRow(dataRowNumber).getCell(totalNumberOfOrdersColumn).setCellFormula(null);
-                outSheet.getRow(dataRowNumber).getCell(totalNumberOfOrdersColumn).setCellValue(sumOf3cell);
-                continue;
-            }
 
-
-            //if ("Государственный кадастровый учет и (или) государственная регистрация прав на недвижимое имущество"
             if ("Государственный кадастровый учет недвижимого имущества и (или) государственная регистрация прав на недвижимое имущество"
                     .equals(outService)) {
 
-                copyXToHCell(
-                        inSheet
-                                .getRow(rosreestrRowNumber2)
-                                .getCell(rosreestrColumn1),
-                        outSheet
-                                .getRow(dataRowNumber)
-                                .getCell(numberOfOrdersFormedForRosreestr));
-                copyXToHCell(inSheet.getRow(rosreestrRowNumber2).getCell(rosreestrColumn1 + 1),
-                        outSheet.getRow(dataRowNumber).getCell(numberOfClosedOrdersForRosreestr));
-
-                //Проверяем на файл federal_subject_mfc
-                if (outFileName.startsWith("federal_subject_mfc")) {
-                    copyXToHCell(
-                            inSheet
-                                    .getRow(rosreestrRowNumber2 + 3)
-                                    .getCell(rosreestrColumn1),
-                            outSheet
-                                    .getRow(dataRowNumber)
-                                    .getCell(numberOfOrdersFormedForRosreestr + 1));
-                    copyXToHCell(inSheet.getRow(rosreestrRowNumber2 + 3).getCell(rosreestrColumn1 + 1),
-                            outSheet.getRow(dataRowNumber).getCell(numberOfClosedOrdersForRosreestr + 1));
-                }
-            }
-            //if ("Предоставление сведений, содержащихся в Едином государственном реестре недвижимости"
-            if ("Предоставление сведений, содержащихся в Едином государственном реестре недвижимости"
-                    .equals(outService)) {
-                copyXToHCell(inSheet.getRow(rosreestrRowNumber1).getCell(rosreestrColumn1),
-                        outSheet.getRow(dataRowNumber).getCell(numberOfOrdersFormedForRosreestr));
-                copyXToHCell(inSheet.getRow(rosreestrRowNumber1).getCell(rosreestrColumn1 + 1),
-                        outSheet.getRow(dataRowNumber).getCell(numberOfClosedOrdersForRosreestr));
-            }
-
-            String inService;
-
-            if ("Установление ежемесячной денежной выплаты отдельным категориям граждан в Российской Федерации"
-                    .equals(outService)) {
-                int sumOfCell = 0;
-                int sumVydachOfCells = 0;
-
-                inService = "Прием заявлений о предоставлении набора социальных услуг, об отказе от получения набора социальных услуг или о возобновлении предоставления набора социальных услуг (Установление ЕДВ)";
-                XSSFRow inRow = inSheet.getRow(inServiceRow.get(inService));
-                XSSFCell inDataCell = inRow.getCell(dataColumn);
-                if (null != inServiceRow.get(inService))
-                    if (null != inDataCell)
-                        if (CellType.NUMERIC.equals(inDataCell.getCellTypeEnum())) {
-                            sumOfCell += inDataCell.getNumericCellValue();
-                            sumVydachOfCells += inRow.getCell(vydachaColumn).getNumericCellValue();
-                        }
-                inService = "Доставка ежемесячной денежной выплаты (Установление ЕДВ)";
-                inRow = inSheet.getRow(inServiceRow.get(inService));
-                inDataCell = inRow.getCell(dataColumn);
-                if (null != inServiceRow.get(inService))
-                    if (null != inDataCell)
-                        if (CellType.NUMERIC.equals(inDataCell.getCellTypeEnum())) {
-                            sumOfCell += inDataCell.getNumericCellValue();
-                            sumVydachOfCells += inRow.getCell(vydachaColumn).getNumericCellValue();
-                        }
-
-                outSheet.getRow(dataRowNumber).getCell(totalNumberOfOrdersColumn).setCellFormula(null);
-                outSheet.getRow(dataRowNumber).getCell(totalNumberOfOrdersColumn).setCellValue(sumOfCell);
-//                outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn + 3).setCellValue(sumVydachOfCells);
+                outSheet.getRow(dataRowNumber).getCell(numberOfOrdersFormedForRosreestr).setCellValue(sumRosreestrUchTotal);
+                outSheet.getRow(dataRowNumber).getCell(numberOfOrdersFormedForRosreestr + 1).setCellValue(sumRosreestrUchExterrTotal);
+                outSheet.getRow(dataRowNumber).getCell(numberOfClosedOrdersForRosreestr).setCellValue(sumRosreestrUchClosed);
+                outSheet.getRow(dataRowNumber).getCell(numberOfClosedOrdersForRosreestr + 1).setCellValue(sumRosreestrUchExterrClosed);
                 continue;
             }
 
-            inService = config.getInForOutService(outService);
-            if (null == inService) continue;
+            if ("Предоставление сведений, содержащихся в Едином государственном реестре недвижимости"
+                    .equals(outService)) {
+                outSheet.getRow(dataRowNumber).getCell(numberOfOrdersFormedForRosreestr).setCellValue(sumRosreestrSvedTotal);
+                outSheet.getRow(dataRowNumber).getCell(numberOfClosedOrdersForRosreestr).setCellValue(sumRosreestrSvedClosed);
+                continue;
+            }
 
-            if (null == inServiceRow.get(inService)) continue;
+            String inService = config.getInForOutService(outService);
+            if (null == inService) {
+                absents.add(outService);
+                continue;
+            } else {
+                HSSFCell outCell = outSheet.getRow(dataRowNumber).getCell(totalNumberOfOrdersColumn);
+                outCell.setCellFormula(null);
+                outCell.setCellValue(0);
+                outCell = outSheet.getRow(dataRowNumber).getCell(totalResultsIssuedToApplicants);
+                outCell.setCellFormula(null);
+                outCell.setCellValue(0);
+            }
+
+            if (null == inServiceRow.get(inService))
+                continue;
             XSSFRow inRow = inSheet.getRow(inServiceRow.get(inService));
-            XSSFCell inDataCell = inRow.getCell(dataColumn);
-            if (null == inDataCell) continue;
+            HSSFCell outCell;
+            XSSFCell inCell;
+            outCell = outSheet.getRow(dataRowNumber).getCell(totalNumberOfOrdersColumn);
+            outCell.setCellFormula(null);
 
-            copyXToHCell(inDataCell, outSheet.getRow(dataRowNumber).getCell(totalNumberOfOrdersColumn));
+            inCell = inRow.getCell(dataColumn);
+            double cellValue = 0;
+            if (null != inCell) cellValue = inCell.getNumericCellValue();
+
+            outCell.setCellValue(cellValue);
+            addToCellDoubleValue(outCell, cellValue);
 
             if (config.hasOutputForService(outService)) {
-                copyXToHCell(inRow.getCell(vydachaColumn),
-                        outSheet.getRow(dataRowNumber).getCell(totalResultsIssuedToApplicants));
-                hasOutputMap.put(outService, true);
+                outCell = outSheet.getRow(dataRowNumber).getCell(totalResultsIssuedToApplicants);
+                outCell.setCellFormula(null);
+                inCell = inRow.getCell(vydachaColumn);
+                cellValue = 0;
+                if (null != inCell) cellValue = inCell.getNumericCellValue();
+                addToCellDoubleValue(outCell, cellValue);
             } else {
-                hasOutputMap.put(outService, false);
+                outSheet.getRow(dataRowNumber).getCell(totalResultsIssuedToApplicants).setCellValue("нет выдачи через МФЦ");
             }
+
             if ("".equals(outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn).getStringCellValue())) break;
         }
 
-        int rowNum = consultRowNumber;
-//        for (rowNum = inSheet.getLastRowNum(); rowNum >= 0; rowNum--) {
-//            if (null == inSheet.getRow(rowNum)) continue;
-//            if (null == inSheet.getRow(rowNum).getCell(0)) continue;
-//            if (inSheet.getRow(rowNum).getCell(0).getStringCellValue().toUpperCase().startsWith("КОНС")) break;
-//            if (inSheet.getRow(rowNum).getCell(0).getStringCellValue().length() > 60) break;
-//        }
-
-        int inTotlFedColumn;
-        for (inTotlFedColumn = 3; inTotlFedColumn < vydachaColumn; inTotlFedColumn++) {
-            XSSFCell cell = inSheet.getRow(consultRowNumber - 1).getCell(inTotlFedColumn);
-            if (null == cell) continue;
-            if (!CellType.STRING.equals(cell.getCellTypeEnum())) continue;
-
-            if (inSheet.getRow(consultRowNumber - 1).getCell(inTotlFedColumn).getStringCellValue().toUpperCase().startsWith("ФЕДЕР"))
+        int inRow;
+        for (inRow = 30; inRow < 2000; inRow++) {
+            XSSFCell tmpCell = inSheet.getRow(inRow).getCell(inServiceNameColumn + 1);
+            if (tmpCell.getStringCellValue().toLowerCase().startsWith("итого:"))
                 break;
         }
 
-        XSSFCell sourceCell = null;
-        HSSFCell destinationCell = null;
+        XSSFCell sourceCell = inSheet.getRow(inRow).getCell(dataColumn + 2);
+        HSSFCell destinationCell = outSheet.getRow(dataRowNumber).getCell(outColumnOfTotalCell);
+        destinationCell.setCellValue(sourceCell.getNumericCellValue());
 
-        if ("fed".equals(auth)) {
-            sourceCell = inSheet.getRow(consultRowNumber).getCell(inTotlFedColumn);
-            destinationCell = outSheet.getRow(outRowOfTotalCell).getCell(outColumnOfTotalCell);
-        } else if ("reg".equals(auth)) {
-            sourceCell = inSheet.getRow(consultRowNumber).getCell(inTotlFedColumn + 1);
-            destinationCell = outSheet.getRow(outRowOfTotalCell).getCell(outColumnOfTotalCell);
-        } else if ("oth".equals(auth)) {
-            sourceCell = inSheet.getRow(consultRowNumber).getCell(inTotlFedColumn + 3);
-            destinationCell = outSheet.getRow(outRowOfTotalCell).getCell(outColumnOfTotalCell);
-        }
-        log.info("consultRowNumber == {}    inTotlFedColumn == {} ", consultRowNumber, inTotlFedColumn);
-        log.info("Totals: {}, {}, {}.", auth, sourceCell, destinationCell);
-
-        copyXToHCell(sourceCell, destinationCell);
-
-        log.info("Finished for {} -> {}==============================================", inSheet.getSheetName(), outSheet.getSheetName());
-
+        log.info("==========Finished for {} -> {}==========", inSheet.getSheetName(), outSheet.getSheetName());
     }
 
-    private static void copyXToHCell(XSSFCell sourceCell, HSSFCell destinationCell) {
-        if (sourceCell == null) {
-            log.info("sourceCell == null на входе copyXToHCell");
-            return;
+    static void addToCellDoubleValue(HSSFCell cell, double number) {
+        double value = number;
+        if (CellType.STRING == cell.getCellTypeEnum()) {
+            cell.setCellFormula(null);
+        } else {
+            value += cell.getNumericCellValue();
         }
-        if (destinationCell == null) {
-            log.info("destinationCell == null на входе copyXToHCell");
-            return;
-        }
-        destinationCell.setCellFormula(null);
-        if (CellType.BLANK.equals(sourceCell.getCellTypeEnum())) {
-        } else if (CellType.NUMERIC.equals(sourceCell.getCellTypeEnum())) {
-            destinationCell.setCellValue(sourceCell.getNumericCellValue());
-        } else if (CellType.STRING.equals(sourceCell.getCellTypeEnum())) {
-            destinationCell.setCellValue(sourceCell.getStringCellValue());
-        } else if (CellType.BOOLEAN.equals(sourceCell.getCellTypeEnum())) {
-            destinationCell.setCellValue(sourceCell.getBooleanCellValue());
-        }
+        cell.setCellValue(value);
     }
 
 
