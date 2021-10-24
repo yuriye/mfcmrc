@@ -5,7 +5,7 @@ import java.util.Locale;
 import java.util.Map;
 
 public class Utils {
-    static private Map<String, Integer> monthsMap = new HashMap<String, Integer>(){{
+    static private final Map<String, Integer> monthsMap = new HashMap<String, Integer>(){{
         put("январь", 1);
         put("февраль", 2);
         put("март", 3);

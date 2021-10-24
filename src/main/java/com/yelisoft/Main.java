@@ -19,7 +19,7 @@ import java.util.Set;
 
 public class Main {
     private static final Logger log = LoggerFactory.getLogger(Main.class);
-    private static Set<String> absents = new HashSet<>();
+    private static final Set<String> absents = new HashSet<>();
 
 
     public static void main(String[] args) throws IOException {
@@ -30,14 +30,13 @@ public class Main {
             configFileName = args[0];
         }
         config.initFromFile(configFileName);
-        String base = config.getInputFolderName();
 
         XSSFWorkbook pagesComplianceBook = new XSSFWorkbook(new FileInputStream(config.getFullPagesComplianceFileName()));
         XSSFSheet pagesComplianceSheet = pagesComplianceBook.getSheetAt(0);
         for (int i = 0; true; i++) {
             XSSFRow row = pagesComplianceSheet.getRow(i);
             if (null == row) break;
-            String val0 = "";
+            String val0;
             if (row.getCell(0).getCellTypeEnum() == CellType.NUMERIC) {
                 val0 = row.getCell(0).getRawValue();
             } else {
@@ -49,7 +48,6 @@ public class Main {
 
         XSSFWorkbook servicesComplianceBook = new XSSFWorkbook(new FileInputStream(config.getFullServicesComplianceFileName()));
         XSSFSheet servicesComplianceSheet = servicesComplianceBook.getSheetAt(0);
-        int count = 0;
         for (int i = 2; true; i++) {
             XSSFRow row = servicesComplianceSheet.getRow(i);
             if (null == row) break;
@@ -58,9 +56,10 @@ public class Main {
             if ("".equals(outService)) continue;
             String inService = row.getCell(1).getStringCellValue();
             if ("".equals(inService)) continue;
-            config.setInForOutService(outService, inService);
+//            config.setInForOutService(outService, inService);
+            config.setOutForInService(inService, outService);
 
-            String tmp = "";
+            String tmp;
             try {
                 tmp = row.getCell(2).getStringCellValue();
             } catch (Exception e) {
@@ -68,11 +67,7 @@ public class Main {
             }
 
             tmp = tmp.trim();
-            if (tmp.length() > 15) {
-                config.setOutputForService(outService, false);
-            } else {
-                config.setOutputForService(outService, true);
-            }
+            config.setOutputForService(outService, tmp.length() <= 15);
         }
 
         System.out.println(config.getOutputFolderName());
@@ -105,11 +100,7 @@ public class Main {
                 if (null == inSheetName) continue;
                 XSSFSheet inSheet = inBook.getSheet(inSheetName);
                 if (null == inSheet) continue;
-                String auth = "";
-                if (bookFile.getName().startsWith("fed")) auth = "fed";
-                else if (bookFile.getName().startsWith("reg")) auth = "reg";
-                else if (bookFile.getName().startsWith("oth")) auth = "oth";
-                SheetsProcessor.process(inSheet, outSheet, cellOffset, auth, bookFile.getName());
+                SheetsProcessor.process(inSheet, outSheet, cellOffset, bookFile.getName());
                 absents.addAll(SheetsProcessor.getAbsents());
             }
             FileOutputStream outStream = new FileOutputStream(bookFile);
@@ -121,7 +112,7 @@ public class Main {
 
         FileWriter writer = new FileWriter(config.getOutputFolderName() + "/отсутствующие услуги.csv");
         writer.write("Наименование\n");
-        absents.stream().forEach(s -> writeAbsent(writer, s));
+        absents.forEach(s -> writeAbsent(writer, s));
         writer.flush();
         writer.close();
         log.info("Main finished");

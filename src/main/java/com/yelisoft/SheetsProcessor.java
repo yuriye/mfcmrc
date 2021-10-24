@@ -9,7 +9,6 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -18,7 +17,7 @@ import java.util.Set;
 public class SheetsProcessor {
 
     private static final Logger log = LoggerFactory.getLogger(SheetsProcessor.class);
-    private static Set<String> absents = new HashSet<>();
+    private static final Set<String> absents = new HashSet<>();
 
     public static Set<String> getAbsents() {
         return absents;
@@ -27,26 +26,23 @@ public class SheetsProcessor {
     public static void process(XSSFSheet inSheet,
                                HSSFSheet outSheet,
                                int outServiceNameColumn,
-                               String auth, String outFileName) throws IOException {
+                               String outFileName) {
 
         log.info("Started for {} -> {} ----------------------------------------------",
                 inSheet.getSheetName(), outFileName + " " + outSheet.getSheetName());
 
         Config config = Config.getInstance();
-        Map<String, Integer> inServiceRow = new HashMap<>();
+        Map<String, Integer> inServiceRows = new HashMap<>();
 
         int inServiceNameColumn = 3;
-        int inSheetStartRow = 7;
+        int inSheetStartRow;
         int dataColumn;
-        int vydachaColumn = 0;
+        int vydachaColumn;
         int outColumnOfTotalCell = outServiceNameColumn + 14;
         String reportMonth = config.getMonth().toLowerCase();
 
         int totalNumberOfOrdersColumn = 10;
         int totalResultsIssuedToApplicants = 17;
-
-        int numberOfOrdersFormedForRosreestr = 6;
-        int numberOfClosedOrdersForRosreestr = 11;
 
         //Ищем стартовую строку
         for (inSheetStartRow = 6; true; inSheetStartRow++) {
@@ -56,6 +52,7 @@ public class SheetsProcessor {
                 if (inSheet.getRow(inSheetStartRow).getCell(0).getNumericCellValue() == 1)
                     break;
             }
+
         }
 
         //Найти колонку данных (выдача, приём, консультации)
@@ -74,12 +71,7 @@ public class SheetsProcessor {
             log.info("Не найдены колонки данных для месяца {}. Выход из программы", capMonth);
         }
 
-        int sumRosreestrUchTotal = 0;
-        int sumRosreestrUchExterrTotal = 0;
-        int sumRosreestrUchClosed = 0;
-        int sumRosreestrUchExterrClosed = 0;
-        int sumRosreestrSvedTotal = 0;
-        int sumRosreestrSvedClosed = 0;
+        Map<String, Double[]> outNumbers= new HashMap<>();
 
         for (int i = inSheetStartRow; i < 2000; i++) {  //2000 - защита от зацикливания
             XSSFRow row = inSheet.getRow(i);
@@ -88,26 +80,19 @@ public class SheetsProcessor {
             if (cell == null) continue;
             String inServiceName = cell.getStringCellValue();
             if ("".equals(inServiceName) || null == inServiceName) continue;
-            inServiceRow.put(inServiceName, i);
-
-            if ("(КАМЧАТСКИЙ КРАЙ) Государственная услуга по государственному кадастровому учету недвижимого имущества и (или) государственной регистрации прав на недвижимое имущество и сделок с ним"
-                    .equals(inServiceName) ||
-                    "(ЭКСТЕР) Государственная услуга по государственному кадастровому учету недвижимого имущества и (или) государственной регистрации прав на недвижимое имущество и сделок с ним"
-                            .equals(inServiceName)) {
-
-                sumRosreestrUchTotal += row.getCell(dataColumn).getNumericCellValue();
-                sumRosreestrUchClosed += row.getCell(vydachaColumn).getNumericCellValue();
-                if (inServiceName.startsWith("(Э")) {
-                    sumRosreestrUchExterrTotal += row.getCell(dataColumn).getNumericCellValue();
-                    ;
-                    sumRosreestrUchExterrClosed += row.getCell(vydachaColumn).getNumericCellValue();
-                }
-
-            } else if ("Государственная услуга по предоставлению сведений, cодержащихся в Едином государственном реестре недвижимости (ЕГРН)"
-                    .equals(inServiceName)) {
-
-                sumRosreestrSvedTotal += row.getCell(dataColumn).getNumericCellValue();
-                sumRosreestrSvedClosed += row.getCell(vydachaColumn).getNumericCellValue();
+            inServiceRows.put(inServiceName, i);
+            String outService = config.getOutForInService(inServiceName);
+            if (null == outService)
+                outService = inServiceName;
+            Double[] sums = new Double[2];
+            sums[0] = row.getCell(dataColumn).getNumericCellValue();
+            sums[1] = row.getCell(vydachaColumn).getNumericCellValue();
+            Double[] outSums = outNumbers.get(outService);
+            if (null == outSums)
+                outNumbers.put(outService, sums);
+            else {
+                outSums[0] += sums[0];
+                outSums[1] += sums[1];
             }
         }
 
@@ -122,59 +107,17 @@ public class SheetsProcessor {
             }
 
             String outService = outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn).getStringCellValue();
-
-            if ("Государственный кадастровый учет недвижимого имущества и (или) государственная регистрация прав на недвижимое имущество"
-                    .equals(outService)) {
-
-                outSheet.getRow(dataRowNumber).getCell(numberOfOrdersFormedForRosreestr).setCellValue(sumRosreestrUchTotal);
-                outSheet.getRow(dataRowNumber).getCell(numberOfOrdersFormedForRosreestr + 1).setCellValue(sumRosreestrUchExterrTotal);
-                outSheet.getRow(dataRowNumber).getCell(numberOfClosedOrdersForRosreestr).setCellValue(sumRosreestrUchClosed);
-                outSheet.getRow(dataRowNumber).getCell(numberOfClosedOrdersForRosreestr + 1).setCellValue(sumRosreestrUchExterrClosed);
-                continue;
-            }
-
-            if ("Предоставление сведений, содержащихся в Едином государственном реестре недвижимости"
-                    .equals(outService)) {
-                outSheet.getRow(dataRowNumber).getCell(numberOfOrdersFormedForRosreestr).setCellValue(sumRosreestrSvedTotal);
-                outSheet.getRow(dataRowNumber).getCell(numberOfClosedOrdersForRosreestr).setCellValue(sumRosreestrSvedClosed);
-                continue;
-            }
-
-            String inService = config.getInForOutService(outService);
-            if (null == inService) {
-                absents.add(outService);
-                continue;
-            } else {
-                HSSFCell outCell = outSheet.getRow(dataRowNumber).getCell(totalNumberOfOrdersColumn);
-                outCell.setCellFormula(null);
-                outCell.setCellValue(0);
-                outCell = outSheet.getRow(dataRowNumber).getCell(totalResultsIssuedToApplicants);
-                outCell.setCellFormula(null);
-                outCell.setCellValue(0);
-            }
-
-            if (null == inServiceRow.get(inService))
-                continue;
-            XSSFRow inRow = inSheet.getRow(inServiceRow.get(inService));
             HSSFCell outCell;
-            XSSFCell inCell;
             outCell = outSheet.getRow(dataRowNumber).getCell(totalNumberOfOrdersColumn);
+            Double[] outSums = outNumbers.get(outService);
+            if (null == outSums) continue;
             outCell.setCellFormula(null);
+            outCell.setCellValue(outSums[0]);
 
-            inCell = inRow.getCell(dataColumn);
-            double cellValue = 0;
-            if (null != inCell) cellValue = inCell.getNumericCellValue();
-
-            outCell.setCellValue(cellValue);
-            addToCellDoubleValue(outCell, cellValue);
-
+            outCell = outSheet.getRow(dataRowNumber).getCell(totalResultsIssuedToApplicants);
             if (config.hasOutputForService(outService)) {
-                outCell = outSheet.getRow(dataRowNumber).getCell(totalResultsIssuedToApplicants);
                 outCell.setCellFormula(null);
-                inCell = inRow.getCell(vydachaColumn);
-                cellValue = 0;
-                if (null != inCell) cellValue = inCell.getNumericCellValue();
-                addToCellDoubleValue(outCell, cellValue);
+                outCell.setCellValue(outSums[1]);
             } else {
                 outSheet.getRow(dataRowNumber).getCell(totalResultsIssuedToApplicants).setCellValue("нет выдачи через МФЦ");
             }
@@ -196,15 +139,15 @@ public class SheetsProcessor {
         log.info("==========Finished for {} -> {}==========", inSheet.getSheetName(), outSheet.getSheetName());
     }
 
-    static void addToCellDoubleValue(HSSFCell cell, double number) {
-        double value = number;
-        if (CellType.STRING == cell.getCellTypeEnum()) {
-            cell.setCellFormula(null);
-        } else {
-            value += cell.getNumericCellValue();
-        }
-        cell.setCellValue(value);
-    }
+    static void addToCellDoubleValue(HSSFCell outCell, XSSFCell inCell) {
+        try {
+            outCell.setCellFormula(null);
+        } catch(Exception e) {}
 
+        double outValue = outCell.getNumericCellValue();
+        double inValue = inCell.getNumericCellValue();
+
+        outCell.setCellValue(outValue + inValue);
+    }
 
 }
