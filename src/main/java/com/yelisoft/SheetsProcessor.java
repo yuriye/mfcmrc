@@ -32,7 +32,6 @@ public class SheetsProcessor {
                 inSheet.getSheetName(), outFileName + " " + outSheet.getSheetName());
 
         Config config = Config.getInstance();
-        Map<String, Integer> inServiceRows = new HashMap<>();
 
         int inServiceNameColumn = 3;
         int inSheetStartRow;
@@ -80,7 +79,6 @@ public class SheetsProcessor {
             if (cell == null) continue;
             String inServiceName = cell.getStringCellValue();
             if ("".equals(inServiceName) || null == inServiceName) continue;
-            inServiceRows.put(inServiceName, i);
             String outService = config.getOutForInService(inServiceName);
             if (null == outService)
                 outService = inServiceName;
@@ -118,8 +116,6 @@ public class SheetsProcessor {
             if (config.hasOutputForService(outService)) {
                 outCell.setCellFormula(null);
                 outCell.setCellValue(outSums[1]);
-            } else {
-                outSheet.getRow(dataRowNumber).getCell(totalResultsIssuedToApplicants).setCellValue("нет выдачи через МФЦ");
             }
 
             if ("".equals(outSheet.getRow(dataRowNumber).getCell(outServiceNameColumn).getStringCellValue())) break;
@@ -137,17 +133,6 @@ public class SheetsProcessor {
         destinationCell.setCellValue(sourceCell.getNumericCellValue());
 
         log.info("==========Finished for {} -> {}==========", inSheet.getSheetName(), outSheet.getSheetName());
-    }
-
-    static void addToCellDoubleValue(HSSFCell outCell, XSSFCell inCell) {
-        try {
-            outCell.setCellFormula(null);
-        } catch(Exception e) {}
-
-        double outValue = outCell.getNumericCellValue();
-        double inValue = inCell.getNumericCellValue();
-
-        outCell.setCellValue(outValue + inValue);
     }
 
 }
