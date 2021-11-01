@@ -27,7 +27,6 @@ public class Config {
     private String month = "";
 
     private String servicesComplianceFileName = "соответствия.xlsx";
-    private final Map<String, String> servicesOutToInMap = new HashMap<>();
     private final Map<String, String> servicesInToOutMap = new HashMap<>();
     private final Map<String, Boolean> hasOutputOfDocs = new HashMap<>();
 
@@ -126,14 +125,6 @@ public class Config {
         return month;
     }
 
-    public String getInForOutService(String outService) {
-        return servicesOutToInMap.get(outService);
-    }
-
-    public void setInForOutService(String outService, String inService) {
-        servicesOutToInMap.put(outService, inService);
-    }
-
     public void setOutForInService(String inService, String outService) {
         servicesInToOutMap.put(inService, outService);
     }
@@ -141,10 +132,6 @@ public class Config {
     public String getOutForInService(String inService) {
         return servicesInToOutMap.get(inService);
     }
-
-
-
-
 
     public String getFullServicesComplianceFileName() {
         return inputFolderName + "\\" + servicesComplianceFileName;

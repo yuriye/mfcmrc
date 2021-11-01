@@ -2,9 +2,12 @@ package com.yelisoft;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -16,11 +19,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
-
 public class Main {
+
     private static final Logger log = LoggerFactory.getLogger(Main.class);
     private static final Set<String> absents = new HashSet<>();
-
 
     public static void main(String[] args) throws IOException {
 
@@ -56,7 +58,6 @@ public class Main {
             if ("".equals(outService)) continue;
             String inService = row.getCell(1).getStringCellValue();
             if ("".equals(inService)) continue;
-//            config.setInForOutService(outService, inService);
             config.setOutForInService(inService, outService);
 
             String tmp;
@@ -83,11 +84,18 @@ public class Main {
                 , new WildcardFileFilter("otherServ*.xls*"));
         String[] exts = {"xls", "xlsx"};
 
-        FileInputStream fileInputStream = new FileInputStream(config.getInputFolderName() + "/" + config.getInputFileName());
-        XSSFWorkbook inBook = new XSSFWorkbook(fileInputStream);
+        Workbook inBook = null;
+        File inFile = new File(config.getInputFolderName(), config.getInputFileName());
+        try {
+            inBook = WorkbookFactory.create(inFile, "", true);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e.getMessage());
+            System.exit(1);
+        }
+
         log.info("Input file: " + config.getInputFolderName() + "/" + config.getInputFileName());
         Collection<File> files = FileUtils.listFiles(new File(config.getOutputFolderName()), exts, false);
-
         for (File bookFile : files) {
             log.info("Output file name: " + bookFile.getCanonicalFile());
             int cellOffset = 4;
@@ -98,7 +106,7 @@ public class Main {
                 HSSFSheet outSheet = outBook.getSheetAt(i);
                 String inSheetName = config.getComplianceSheetName(outSheet.getSheetName());
                 if (null == inSheetName) continue;
-                XSSFSheet inSheet = inBook.getSheet(inSheetName);
+                Sheet inSheet = inBook.getSheet(inSheetName);
                 if (null == inSheet) continue;
                 SheetsProcessor.process(inSheet, outSheet, cellOffset, bookFile.getName());
                 absents.addAll(SheetsProcessor.getAbsents());
@@ -108,6 +116,7 @@ public class Main {
             outStream.close();
             outBook.close();
         }
+
         inBook.close();
 
         FileWriter writer = new FileWriter(config.getOutputFolderName() + "/отсутствующие услуги.csv");
