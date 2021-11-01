@@ -47,7 +47,7 @@ public class SheetsProcessor {
         for (inSheetStartRow = 6; true; inSheetStartRow++) {
             if (inSheet.getRow(inSheetStartRow) == null) break;
             if (inSheet.getRow(inSheetStartRow).getCell(0) == null) continue;
-            if (CellType.NUMERIC.equals(inSheet.getRow(inSheetStartRow).getCell(0).getCellTypeEnum())) {
+            if (CellType.NUMERIC.equals(inSheet.getRow(inSheetStartRow).getCell(0).getCellType())) {
                 if (inSheet.getRow(inSheetStartRow).getCell(0).getNumericCellValue() == 1)
                     break;
             }
@@ -121,7 +121,7 @@ public class SheetsProcessor {
             Cell stringNumberCell = outSheet.getRow(dataRowNumber).getCell(outStringNumber);
 
             if (null != stringNumberCell
-                    && CellType.STRING.equals(stringNumberCell.getCellTypeEnum())
+                    && CellType.STRING.equals(stringNumberCell.getCellType())
                     && stringNumberCell.getStringCellValue().startsWith("Общее")) {
                 break;
             }
@@ -132,12 +132,12 @@ public class SheetsProcessor {
             Double[] outSums = outNumbers.get(outService);
             if (null == outSums)
                 continue;
-            outCell.setCellFormula(null);
+            outCell.setBlank();
             outCell.setCellValue(outSums[0]);
 
             outCell = outSheet.getRow(dataRowNumber).getCell(totalResultsIssuedToApplicants);
             if (config.hasOutputForService(outService)) {
-                outCell.setCellFormula(null);
+                outCell.setBlank();
                 outCell.setCellValue(outSums[1]);
             }
 
@@ -150,7 +150,7 @@ public class SheetsProcessor {
             Cell tmpCell = null;
             try {
                 tmpCell = inSheet.getRow(inRow).getCell(inServiceNameColumn + 1);
-                if (tmpCell.getCellTypeEnum() != CellType.STRING) {
+                if (tmpCell.getCellType() != CellType.STRING) {
                     continue;
                 }
             } catch (Exception e) {

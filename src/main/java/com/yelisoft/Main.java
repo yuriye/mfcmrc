@@ -39,7 +39,7 @@ public class Main {
             XSSFRow row = pagesComplianceSheet.getRow(i);
             if (null == row) break;
             String val0;
-            if (row.getCell(0).getCellTypeEnum() == CellType.NUMERIC) {
+            if (row.getCell(0).getCellType() == CellType.NUMERIC) {
                 val0 = row.getCell(0).getRawValue();
             } else {
                 val0 = row.getCell(0).getStringCellValue();
@@ -116,14 +116,16 @@ public class Main {
             outStream.close();
             outBook.close();
         }
-
         inBook.close();
 
-        FileWriter writer = new FileWriter(config.getOutputFolderName() + "/отсутствующие услуги.csv");
-        writer.write("Наименование\n");
-        absents.forEach(s -> writeAbsent(writer, s));
-        writer.flush();
-        writer.close();
+        if (absents.size() > 0) {
+            FileWriter writer = new FileWriter(config.getOutputFolderName() + "/отсутствующие услуги.csv");
+            writer.write("Наименование\n");
+            absents.forEach(s -> writeAbsent(writer, s));
+            writer.flush();
+            writer.close();
+        }
+
         log.info("Main finished");
     }
 

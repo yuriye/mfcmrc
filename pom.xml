@@ -11,8 +11,8 @@
 
     <properties>
         <!-- Logging -->
-        <logback.version>1.2.2</logback.version>
-        <slf4j.version>1.7.25</slf4j.version>
+        <logback.version>1.2.6</logback.version>
+        <slf4j.version>1.7.32</slf4j.version>
     </properties>
 
     <build>
@@ -29,6 +29,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
+                <version>3.2.0</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -69,7 +70,7 @@
 <!--        <dependency>-->
 <!--            <groupId>org.apache.maven.plugins</groupId>-->
 <!--            <artifactId>maven-jar-plugin</artifactId>-->
-<!--            <version>3.2.0</version>-->
+<!--            <version>3.8.1</version>-->
 <!--        </dependency>-->
 
 <!--        &lt;!&ndash; https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-assembly-plugin &ndash;&gt;-->
@@ -83,7 +84,7 @@
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi</artifactId>
-            <version>3.17</version>
+            <version>5.0.0</version>
             <scope>compile</scope>
         </dependency>
 
@@ -91,7 +92,7 @@
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
-            <version>3.17</version>
+            <version>5.0.0</version>
             <scope>compile</scope>
         </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.directory.studio/org.apache.commons.io -->
