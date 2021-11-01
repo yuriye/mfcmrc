@@ -50,14 +50,18 @@ public class Main {
 
         XSSFWorkbook servicesComplianceBook = new XSSFWorkbook(new FileInputStream(config.getFullServicesComplianceFileName()));
         XSSFSheet servicesComplianceSheet = servicesComplianceBook.getSheetAt(0);
-        for (int i = 2; true; i++) {
-            XSSFRow row = servicesComplianceSheet.getRow(i);
-            if (null == row) break;
-            if (null == row.getCell(0)) continue;
+        for (int rowNum = 2; true; rowNum++) {
+            XSSFRow row = servicesComplianceSheet.getRow(rowNum);
+            if (null == row)
+                break;
+            if (null == row.getCell(0))
+                continue;
             String outService = row.getCell(0).getStringCellValue();
-            if ("".equals(outService)) continue;
+            if ("".equals(outService))
+                continue;
             String inService = row.getCell(1).getStringCellValue();
-            if ("".equals(inService)) continue;
+            if ("".equals(inService))
+                continue;
             config.setOutForInService(inService, outService);
 
             String tmp;
@@ -94,8 +98,11 @@ public class Main {
             System.exit(1);
         }
 
+
+
         log.info("Input file: " + config.getInputFolderName() + "/" + config.getInputFileName());
         Collection<File> files = FileUtils.listFiles(new File(config.getOutputFolderName()), exts, false);
+
         for (File bookFile : files) {
             log.info("Output file name: " + bookFile.getCanonicalFile());
             int cellOffset = 4;
